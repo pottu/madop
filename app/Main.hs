@@ -2,6 +2,7 @@ module Main where
 
 import System.Environment (getArgs)
 import Parser 
+import Renderer
 
 main :: IO ()
 main = do
@@ -11,4 +12,4 @@ main = do
     then putStrLn "Please supply string to be parsed."
     else do
         mdToParse <- getArgs
-        print $ parseMd $ head mdToParse
+        putStrLn $ renderHTML $ parseMd $ head mdToParse
