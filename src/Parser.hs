@@ -1,7 +1,11 @@
 module Parser
-    ( parseMd 
+    ( Document
+    , parseMd 
     ) where
 
+
+import qualified Text.Parsec as Prsc
+import Text.Parsec.String (Parser)
 
 type Document = [Block]
 
@@ -11,10 +15,18 @@ data Block
 
 data Span 
     = Text String 
---    | Bold String
     deriving(Show)
 
 
-
 parseMd :: String -> Document
-parseMd s = [Paragraph $ [Text s]]
+parseMd s = let parsed = Prsc.parse parseBlock "" s 
+             in case parsed of
+                    Right block -> block : []
+                    Left e -> error (show e)
+
+
+
+parseBlock :: Parser Block
+parseBlock = do
+    text <- Prsc.many Prsc.anyChar
+    return $ Paragraph $ [Text text]
