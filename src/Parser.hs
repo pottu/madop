@@ -14,6 +14,7 @@ parseMd s = let parsed = Prsc.parse parseBlock "" s
                   Left e -> error (show e)
 
 
+-- FIXME: This is just a dummy.
 parseBlock :: Parser Block
 parseBlock = do
     text <- Prsc.many Prsc.anyChar
