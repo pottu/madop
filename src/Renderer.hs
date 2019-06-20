@@ -3,11 +3,11 @@ module Renderer (renderHTML) where
 import Types
 
 renderHTML :: Document -> String
-renderHTML [] = ""
-renderHTML (block:doc) = renderBlock block ++ renderHTML doc
+renderHTML = concatMap renderBlock 
 
 renderBlock :: Block -> String
 renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
+-- Add cases when Block expands.
 
 renderSpans :: [Span] -> String
 renderSpans = concatMap renderSpan
