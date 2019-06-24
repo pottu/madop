@@ -9,6 +9,7 @@ type Document = [Block]
 -- TODO: Add more block elements as needed
 data Block 
     = Paragraph [Span]
+    | Header Int String
     deriving (Show)
 
 -- | Represents common inline elements 
