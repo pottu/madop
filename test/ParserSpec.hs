@@ -18,7 +18,27 @@ spec = do
             `shouldBe` 
             [(Header 4 [Text "Simple h4"])]
 
-        it "parses a random sentence" $ do
+        it "parses header with closing hashes" $ do
+            parseMd "## Closing #es ###" 
+            `shouldBe` 
+            [(Header 2 [Text "Closing #es"])]
+
+        it "parses a simple sentence" $ do
             parseMd "Lorem ipsum dolor sit amet." 
             `shouldBe` 
             [(Paragraph [Text "Lorem ipsum dolor sit amet."])]
+
+        it "parses a simple link" $ do
+            parseMd "[Simple Link](www.com Title)" 
+            `shouldBe` 
+            [(Paragraph [Link "Simple Link" "www.com" "Title"])]
+
+        it "parses text with link" $ do
+            parseMd "This is [a link](www.com A title) in text." 
+            `shouldBe` 
+            [ Paragraph 
+                [ Text "This is "
+                , Link "a link" "www.com" "A title"
+                , Text " in text."
+                ]
+            ]
