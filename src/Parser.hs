@@ -28,7 +28,7 @@ parseHeader :: Parser Block
 parseHeader = do
     level <- length <$> Prsc.many1 (Prsc.char '#')
     Prsc.space
-    header <- Prsc.manyTill Prsc.anyChar (Prsc.try headerEnding)
+    header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
     return $ Header level header 
         where 
             headerEnding = do
@@ -41,5 +41,44 @@ parseHeader = do
 -- FIXME: This is just a dummy.
 parseParagraph :: Parser Block
 parseParagraph = do
-    text <- Prsc.manyTill Prsc.anyChar (Prsc.oneOf "\n")
-    return $ Paragraph [Text text]
+    spans <- parseSpans
+    return $ Paragraph spans
+
+
+
+parseSpans :: Parser [Span]
+parseSpans = Prsc.manyTill parseSpan Prsc.newline
+
+
+
+parseSpan :: Parser Span
+parseSpan = 
+    Prsc.try parseLink
+    <|> parseText
+
+
+
+parseText :: Parser Span
+parseText = do
+    text <- Prsc.manyTill Prsc.anyChar (Prsc.lookAhead $ Prsc.oneOf "\n[")
+    return $ Text text
+
+
+
+-- FIXME: Forces link with title.
+-- TODO: Handle reference-style links.
+parseLink :: Parser Span 
+parseLink = do
+    text <- Prsc.char '[' *> Prsc.manyTill Prsc.anyChar (Prsc.char ']') 
+    href <- Prsc.char '(' *> Prsc.manyTill Prsc.anyChar (Prsc.char ' ')
+    title <- Prsc.manyTill Prsc.anyChar (Prsc.char ')')
+    return $ Link text href title
+
+
+
+
+
+
+
+
+

@@ -9,13 +9,14 @@ type Document = [Block]
 -- TODO: Add more block elements as needed
 data Block 
     = Paragraph [Span]
-    | Header Int String
-    deriving (Show)
+    | Header Int [Span] 
+    deriving (Show, Eq)
 
 -- | Represents common inline elements 
 -- for a markup language (such as HTML).
 -- TODO: Add more span elements as needed
 data Span 
     = Text String 
-    deriving (Show)
+    | Link { text :: String, href :: String, title :: String }
+    deriving (Show, Eq)
 
