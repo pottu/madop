@@ -24,6 +24,7 @@ documentEnding = do
   Prsc.eof
 
 
+
 parseBlock :: Parser Block
 parseBlock = 
     Prsc.try parseHeader
@@ -50,7 +51,6 @@ parseHeader = do
 
 
 
--- FIXME: This is just a dummy.
 parseParagraph :: Parser Block
 parseParagraph = do
     spans <- Prsc.manyTill parseSpan (Prsc.try paragraphEnding)
