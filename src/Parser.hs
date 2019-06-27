@@ -32,22 +32,19 @@ parseBlock =
 
 
 
--- FIXME: Assumes EOL (as in: won't handle EOF)
---        Maybe append EOL to input at start.
 -- TODO: Handle Setext-style headers.
--- FIXME: Parse span elements.
 parseHeader :: Parser Block
 parseHeader = do
-    level <- length <$> Prsc.many1 (Prsc.char '#')
-    Prsc.space
-    header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
-    return $ Header level header 
-        where 
-            headerEnding = do
-                Prsc.skipMany (Prsc.char ' ')
-                Prsc.skipMany (Prsc.char '#')
-                Prsc.skipMany (Prsc.char ' ')
-                Prsc.endOfLine
+  level <- length <$> Prsc.many1 (Prsc.char '#')
+  Prsc.many1 Prsc.space
+  header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
+  return $ Header level header 
+    where 
+      headerEnding = do
+        Prsc.skipMany (Prsc.char ' ')
+        Prsc.skipMany (Prsc.char '#')
+        Prsc.skipMany (Prsc.char ' ')
+        Prsc.endOfLine
 
 
 
