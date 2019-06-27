@@ -3,7 +3,7 @@ module Renderer (renderHTML) where
 import Types
 
 renderHTML :: Document -> String
-renderHTML = concatMap renderBlock 
+renderHTML = concatMap ((++"\n") . renderBlock)
 
 renderBlock :: Block -> String
 renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
