@@ -1,4 +1,5 @@
-module Parser (parseMd) where
+-- FIXME: Don't expose all functions.
+module Parser where
 
 import Types
 import Control.Applicative ((<|>))
