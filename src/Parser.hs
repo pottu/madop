@@ -7,11 +7,21 @@ import Text.Parsec.String (Parser)
 
 
 -- | Parse a string formatted with Markdown.
+-- FIXME: Adding newlines might not be the best way.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.parse parseBlock "" s 
+parseMd s = let parsed = Prsc.parse parseDocument "" (s ++ "\n\n")
              in case parsed of
-                  Right block -> [block]
-                  Left e -> error (show e)
+                Right doc -> doc
+                Left e -> error (show e)
+
+
+parseDocument :: Parser Document
+parseDocument = Prsc.manyTill parseBlock documentEnding
+
+documentEnding :: Parser ()
+documentEnding = do
+  Prsc.skipMany $ Prsc.oneOf " \n"
+  Prsc.eof
 
 
 parseBlock :: Parser Block
