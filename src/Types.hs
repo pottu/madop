@@ -17,6 +17,7 @@ data Block
 -- TODO: Add more span elements as needed
 data Span 
     = Text String 
+    | Space -- Perhaps it'd be a good idea to count amount of spaces?
     | Link { text :: String, href :: String, title :: String }
     deriving (Show, Eq)
 

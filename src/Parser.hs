@@ -30,6 +30,7 @@ parseBlock =
     <|> parseParagraph
 
 
+
 -- FIXME: Assumes EOL (as in: won't handle EOF)
 --        Maybe append EOL to input at start.
 -- TODO: Handle Setext-style headers.
@@ -48,30 +49,42 @@ parseHeader = do
                 Prsc.endOfLine
 
 
+
 -- FIXME: This is just a dummy.
 parseParagraph :: Parser Block
 parseParagraph = do
-    spans <- parseSpans
+    spans <- Prsc.manyTill parseSpan (Prsc.try paragraphEnding)
     return $ Paragraph spans
 
-
-
-parseSpans :: Parser [Span]
-parseSpans = Prsc.manyTill parseSpan Prsc.newline
+-- FIXME: Refactor.
+paragraphEnding :: Parser () 
+paragraphEnding = do
+  Prsc.skipMany (Prsc.char ' ')
+  Prsc.endOfLine
+  Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
+  return ()
 
 
 
 parseSpan :: Parser Span
-parseSpan = 
-    Prsc.try parseLink
-    <|> parseText
+parseSpan = Prsc.try parseSpace
+        <|> Prsc.try parseLink
+        <|> parseText
 
 
 
 parseText :: Parser Span
 parseText = do
-    text <- Prsc.manyTill Prsc.anyChar (Prsc.lookAhead $ Prsc.oneOf "\n[")
-    return $ Text text
+  -- FIXME: Refactor - Prsc.many Prsc.noneOf perhaps?
+  text <- Prsc.manyTill Prsc.anyChar (Prsc.lookAhead $ Prsc.oneOf " \n[")
+  return $ Text text
+
+
+
+parseSpace :: Parser Span
+parseSpace = do
+  Prsc.space
+  return Space
 
 
 
