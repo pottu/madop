@@ -1,44 +1,52 @@
 module ParserSpec (spec) where
 
 import Test.Hspec
+import Text.Parsec (parse)
+import Text.Parsec.String (Parser)
+
 import Types
 import Parser
 
 
+testParser :: Parser a -> String -> a 
+testParser p s = 
+  let parsed = parse p "" (s ++ "\n\n")
+   in case parsed of
+        Right doc -> doc
+        Left e -> error ("Error when parsing \"" ++ s ++ "\"") -- Shouldn't happen.
+
+
+
 spec :: Spec
 spec = do
-    describe "parseMd" $ do
-        it "parses a simple h1" $ do
-            parseMd "# Simple h1" 
-            `shouldBe` 
-            [(Header 1 [Text "Simple h1"])]
+  describe "parseHeader" $ do
+    it "handles simple h1" $ do
+      testParser parseHeader "# Simple h1"
+      `shouldBe`
+      (Header 1 [Text "Simple", Space, Text "h1"])
 
-        it "parses a simple h4" $ do
-            parseMd "#### Simple h4" 
-            `shouldBe` 
-            [(Header 4 [Text "Simple h4"])]
+    it "handles simple h4" $ do
+      testParser parseHeader "#### Simple h4"
+      `shouldBe`
+      (Header 4 [Text "Simple", Space, Text "h4"])
 
-        it "parses header with closing hashes" $ do
-            parseMd "## Closing #es ###" 
-            `shouldBe` 
-            [(Header 2 [Text "Closing #es"])]
+    it "handles closing hashes" $ do
+      testParser parseHeader "### Closing hashes ####"
+      `shouldBe`
+      (Header 3 [Text "Closing", Space, Text "hashes"])
 
-        it "parses a simple sentence" $ do
-            parseMd "Lorem ipsum dolor sit amet." 
-            `shouldBe` 
-            [(Paragraph [Text "Lorem ipsum dolor sit amet."])]
 
-        it "parses a simple link" $ do
-            parseMd "[Simple Link](www.com Title)" 
-            `shouldBe` 
-            [(Paragraph [Link "Simple Link" "www.com" "Title"])]
+  describe "parseParagraph" $ do
+    it "handles simple sentence" $ do
+        testParser parseParagraph "Lorem ipsum dolor sit amet." 
+        `shouldBe` 
+        (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
+                    Text "dolor", Space, Text "sit", Space, Text "amet."])
 
-        it "parses text with link" $ do
-            parseMd "This is [a link](www.com A title) in text." 
-            `shouldBe` 
-            [ Paragraph 
-                [ Text "This is "
-                , Link "a link" "www.com" "A title"
-                , Text " in text."
-                ]
-            ]
+  describe "parseLink" $ do
+    it "handles simple link" $ do
+      testParser parseLink "[Simple link](www.com with title)"
+      `shouldBe`
+      (Link "Simple link" "www.com" "with title")
+
+
