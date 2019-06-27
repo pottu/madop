@@ -43,10 +43,20 @@ spec = do
         (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
                     Text "dolor", Space, Text "sit", Space, Text "amet."])
 
+    it "handles soft breaks" $ do
+        testParser parseParagraph "Lorem ipsum\ndolor sit amet." 
+        `shouldBe` 
+        (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
+                    Text "dolor", Space, Text "sit", Space, Text "amet."])
+
   describe "parseLink" $ do
     it "handles simple link" $ do
       testParser parseLink "[Simple link](www.com with title)"
       `shouldBe`
       (Link "Simple link" "www.com" "with title")
 
+    it "handles a link without title" $ do
+      testParser parseLink "[Untitled](www.com)"
+      `shouldBe`
+      (Link "Untitled" "www.com" "")
 
