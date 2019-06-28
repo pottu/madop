@@ -13,23 +13,22 @@ parseMd :: String -> Document
 parseMd s = let parsed = Prsc.parse parseDocument "" (s ++ "\n\n")
              in case parsed of
                 Right doc -> doc
-                Left e -> error (show e)
+                Left e -> error (show e) -- Shouldn't happen.
+
 
 
 parseDocument :: Parser Document
 parseDocument = Prsc.manyTill parseBlock documentEnding
-
-documentEnding :: Parser ()
-documentEnding = do
-  Prsc.skipMany $ Prsc.oneOf " \n"
-  Prsc.eof
+  where
+    documentEnding = do
+      Prsc.skipMany $ Prsc.oneOf " \n"
+      Prsc.eof
 
 
 
 parseBlock :: Parser Block
-parseBlock = 
-    Prsc.try parseHeader
-    <|> parseParagraph
+parseBlock = Prsc.try parseHeader
+         <|> parseParagraph
 
 
 
@@ -40,27 +39,25 @@ parseHeader = do
   Prsc.many1 Prsc.space
   header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
   return $ Header level header 
-    where 
-      headerEnding = do
-        Prsc.skipMany (Prsc.char ' ')
-        Prsc.skipMany (Prsc.char '#')
-        Prsc.skipMany (Prsc.char ' ')
-        Prsc.endOfLine
+  where 
+    headerEnding = do
+      Prsc.skipMany (Prsc.char ' ')
+      Prsc.skipMany (Prsc.char '#')
+      Prsc.skipMany (Prsc.char ' ')
+      Prsc.endOfLine
 
 
 
 parseParagraph :: Parser Block
 parseParagraph = do
-    spans <- Prsc.manyTill parseSpan (Prsc.try paragraphEnding)
-    return $ Paragraph spans
-
--- FIXME: Refactor.
-paragraphEnding :: Parser () 
-paragraphEnding = do
-  Prsc.skipMany (Prsc.char ' ')
-  Prsc.endOfLine
-  Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
-  return ()
+  spans <- Prsc.manyTill parseSpan (Prsc.try paragraphEnding)
+  return $ Paragraph spans
+  where
+    -- FIXME: Refactor.
+    paragraphEnding = do
+      Prsc.skipMany (Prsc.char ' ')
+      Prsc.endOfLine
+      Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
 
 
 
@@ -73,8 +70,7 @@ parseSpan = Prsc.try parseSpace
 
 parseText :: Parser Span
 parseText = do
-  -- FIXME: Refactor - Prsc.many Prsc.noneOf perhaps?
-  text <- Prsc.manyTill Prsc.anyChar (Prsc.lookAhead $ Prsc.oneOf " \n[")
+  text <- Prsc.many $ Prsc.noneOf " \n["
   return $ Text text
 
 
