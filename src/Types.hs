@@ -19,5 +19,6 @@ data Span
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
     | Link { text :: String, href :: String, title :: String }
+    | Emph [Span]
     deriving (Show, Eq)
 

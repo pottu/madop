@@ -64,13 +64,15 @@ parseParagraph = do
 parseSpan :: Parser Span
 parseSpan = Prsc.try parseSpace
         <|> Prsc.try parseLink
+        <|> Prsc.try parseEmph
         <|> parseText
 
 
 
 parseText :: Parser Span
 parseText = do
-  text <- Prsc.many $ Prsc.noneOf " \n["
+  -- FIXME: Put reserved chars somewhere more appropiate.
+  text <- Prsc.many $ Prsc.noneOf " \n[*_"
   return $ Text text
 
 
@@ -93,6 +95,12 @@ parseLink = do
 
 
 
+-- FIXME: Fail parsing if end of block.
+parseEmph :: Parser Span
+parseEmph = do
+  opening <- Prsc.char '*' <|> Prsc.char '_'
+  content <- Prsc.manyTill parseSpan (Prsc.char opening)
+  return $ Emph content
 
 
 

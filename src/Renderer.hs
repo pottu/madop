@@ -21,5 +21,6 @@ renderSpan (Text s) = s
 renderSpan (Space) = " "
 renderSpan (Link text href title) =
   "<a href=\"" ++ href ++ "\" title=\"" ++ title ++ "\">" ++ text ++ "</a>"
+renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
 -- Add cases when Span expands.
 

@@ -36,6 +36,7 @@ spec = do
       (Header 3 [Text "Closing", Space, Text "hashes"])
 
 
+
   describe "parseParagraph" $ do
     it "handles simple sentence" $ do
         testParser parseParagraph "Lorem ipsum dolor sit amet." 
@@ -43,11 +44,13 @@ spec = do
         (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
                     Text "dolor", Space, Text "sit", Space, Text "amet."])
 
-    it "handles soft breaks" $ do
+    it "handles soft break" $ do
         testParser parseParagraph "Lorem ipsum\ndolor sit amet." 
         `shouldBe` 
         (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
                     Text "dolor", Space, Text "sit", Space, Text "amet."])
+
+
 
   describe "parseLink" $ do
     it "handles simple link" $ do
@@ -59,4 +62,23 @@ spec = do
       testParser parseLink "[Untitled](www.com)"
       `shouldBe`
       (Link "Untitled" "www.com" "")
+
+
+  
+  describe "parseEmph" $ do
+    it "handles emphasize with *" $ do
+      testParser parseEmph "*Asterisk Emphasize*"
+      `shouldBe`
+      Emph [Text "Asterisk", Space, Text "Emphasize"]
+
+    it "handles emphasize with _" $ do
+      testParser parseEmph "_Underscore Emphasize_"
+      `shouldBe`
+      Emph [Text "Underscore", Space, Text "Emphasize"]
+
+    it "handles nested emphasize" $ do
+      testParser parseEmph "*Nest _test_*"
+      `shouldBe`
+      Emph [Text "Nest", Space, Emph [Text "test"]]
+
 
