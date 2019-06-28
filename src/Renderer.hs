@@ -1,4 +1,5 @@
-module Renderer (renderHTML) where
+-- FIXME: Don't expose all functions.
+module Renderer where
 
 import Types
 
