@@ -6,6 +6,7 @@ import Control.Applicative ((<|>))
 import qualified Text.Parsec as Prsc
 import Text.Parsec.String (Parser)
 
+mdSymbols = ['*', '_', '[', ']', '(', ')', '#']
 
 -- | Parse a string formatted with Markdown.
 -- FIXME: Adding newlines might not be the best way.
@@ -44,13 +45,14 @@ parseHeader = do
       Prsc.skipMany (Prsc.char ' ')
       Prsc.skipMany (Prsc.char '#')
       Prsc.skipMany (Prsc.char ' ')
-      Prsc.endOfLine
+      Prsc.skipMany1 Prsc.endOfLine
 
 
 
 parseParagraph :: Parser Block
 parseParagraph = do
-  spans <- Prsc.manyTill parseSpan (Prsc.try paragraphEnding)
+  spans <- Prsc.many1 parseSpan
+  paragraphEnding
   return $ Paragraph spans
   where
     -- FIXME: Refactor.
@@ -62,29 +64,47 @@ parseParagraph = do
 
 
 parseSpan :: Parser Span
-parseSpan = Prsc.try parseSpace
+parseSpan = Prsc.try parseNl
+        <|> Prsc.try parseSpace
         <|> Prsc.try parseLink
         <|> Prsc.try parseEmph
         <|> parseText
+        <|> parseSymbol
+
+
+
+parseNl :: Parser Span
+parseNl = do
+  Prsc.endOfLine
+  Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+  return Space
+
+
+
+parseSymbol :: Parser Span
+parseSymbol = do
+  c <- Prsc.oneOf mdSymbols
+  case c of
+    _    -> return $ Text [c]
 
 
 
 parseText :: Parser Span
 parseText = do
-  -- FIXME: Put reserved chars somewhere more appropiate.
-  text <- Prsc.many $ Prsc.noneOf " \n[*_"
+  text <- Prsc.many1 $ Prsc.noneOf (' ':'\n':mdSymbols)
   return $ Text text
 
 
 
 parseSpace :: Parser Span
 parseSpace = do
-  Prsc.space
+  Prsc.char ' '
   return Space
 
 
 
 -- FIXME: Forces link with title.
+-- FIXME: Title is actually supposed to be wrapped in quotations (")
 -- TODO: Handle reference-style links.
 parseLink :: Parser Span 
 parseLink = do
@@ -94,12 +114,13 @@ parseLink = do
     return $ Link text href title
 
 
-
--- FIXME: Fail parsing if end of block.
+-- FIXME: Spec has rules on spaces around opening/closing signs
 parseEmph :: Parser Span
 parseEmph = do
   opening <- Prsc.char '*' <|> Prsc.char '_'
-  content <- Prsc.manyTill parseSpan (Prsc.char opening)
+  -- Look into if why Prsc.manyTill is not sufficient here:
+  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char opening) *> parseSpan
+  Prsc.char opening
   return $ Emph content
 
 
