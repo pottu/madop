@@ -35,6 +35,16 @@ spec = do
       `shouldBe`
       (Header 3 [Text "Closing", Space, Text "hashes"])
 
+    it "handles emphasis" $ do
+      testParser parseHeader "# Has *emph*"
+      `shouldBe`
+      Header 1 [Text "Has", Space, Emph [Text "emph"]]
+
+    it "handles unclosed emphasis" $ do
+      testParser parseHeader "# No *emph"
+      `shouldBe`
+      Header 1 [Text "No", Space, Text "*", Text "emph"]
+
 
 
   describe "parseParagraph" $ do
@@ -50,6 +60,20 @@ spec = do
         (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
                     Text "dolor", Space, Text "sit", Space, Text "amet."])
 
+    it "handles emphasis" $ do
+      testParser parseParagraph "Has *emphasis*"
+      `shouldBe`
+      Paragraph [Text "Has", Space, Emph [Text "emphasis"]]
+
+    it "handles emphasis spanning two lines" $ do
+      testParser parseParagraph "Has *emphasis\nover lines*"
+      `shouldBe`
+      Paragraph [Text "Has", Space, Emph [Text "emphasis", Space, Text "over", Space, Text "lines"]]
+
+    it "handles unclosed emphasis" $ do
+      testParser parseParagraph "Fake *emphasis"
+      `shouldBe`
+      Paragraph [Text "Fake", Space, Text "*", Text "emphasis"]
 
 
   describe "parseLink" $ do
@@ -80,5 +104,3 @@ spec = do
       testParser parseEmph "*Nest _test_*"
       `shouldBe`
       Emph [Text "Nest", Space, Emph [Text "test"]]
-
-
