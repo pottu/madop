@@ -75,17 +75,26 @@ spec = do
       `shouldBe`
       Paragraph [Text "Fake", Space, Text "*", Text "emphasis"]
 
+    it "handles unclosed links" $ do
+      testParser parseParagraph "This [link](is fake"
+      `shouldBe`
+      Paragraph [Text "This", Space, Text "[", Text "link", Text "]", Text "(", Text "is", Space, Text "fake"]
+
+    it "handles unclosed links 2" $ do
+      testParser parseParagraph "This [link is fake"
+      `shouldBe`
+      Paragraph [Text "This", Space, Text "[", Text "link", Space, Text "is", Space, Text "fake"]
 
   describe "parseLink" $ do
     it "handles simple link" $ do
-      testParser parseLink "[Simple link](www.com with title)"
+      testParser parseLink "[Simple link](www.com \"Has title\")"
       `shouldBe`
-      (Link "Simple link" "www.com" "with title")
+      Link "Simple link" "www.com" (Just "Has title")
 
     it "handles a link without title" $ do
       testParser parseLink "[Untitled](www.com)"
       `shouldBe`
-      (Link "Untitled" "www.com" "")
+      Link "Untitled" "www.com" Nothing
 
 
   
