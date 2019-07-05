@@ -5,6 +5,7 @@ import Types
 import Control.Applicative ((<|>))
 import qualified Text.Parsec as Prsc
 import Text.Parsec.String (Parser)
+import Data.Maybe
 
 mdSymbols = ['*', '_', '[', ']', '(', ')', '#']
 
@@ -54,12 +55,12 @@ parseParagraph = do
   spans <- Prsc.many1 parseSpan
   paragraphEnding
   return $ Paragraph spans
-  where
-    -- FIXME: Refactor.
-    paragraphEnding = do
-      Prsc.skipMany (Prsc.char ' ')
-      Prsc.endOfLine
-      Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
+    where
+      -- FIXME: Refactor.
+      paragraphEnding = do
+        Prsc.skipMany (Prsc.char ' ')
+        Prsc.endOfLine
+        Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
 
 
 
@@ -84,8 +85,7 @@ parseNl = do
 parseSymbol :: Parser Span
 parseSymbol = do
   c <- Prsc.oneOf mdSymbols
-  case c of
-    _    -> return $ Text [c]
+  return $ Text [c]
 
 
 
@@ -102,16 +102,34 @@ parseSpace = do
   return Space
 
 
+parseTextBetween :: Char -> Char -> Parser a -> Parser [a]
+parseTextBetween open close p = do
+  Prsc.char open
+  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char close) *> p
+  Prsc.char close
+  return content
 
--- FIXME: Forces link with title.
--- FIXME: Title is actually supposed to be wrapped in quotations (")
+
+-- Parses any char but respects block endings.
+-- As with parseNl it only cares for paragraphs atm.
+parseChar :: Parser Char 
+parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
+
+
+
+
 -- TODO: Handle reference-style links.
 parseLink :: Parser Span 
 parseLink = do
-    text <- Prsc.char '[' *> Prsc.manyTill Prsc.anyChar (Prsc.char ']') 
-    href <- Prsc.char '(' *> Prsc.manyTill Prsc.anyChar (Prsc.char ' ')
-    title <- Prsc.manyTill Prsc.anyChar (Prsc.char ')')
-    return $ Link text href title
+  text <- parseTextBetween '[' ']' parseChar
+  Prsc.char '('
+  href <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
+                    *> parseChar
+  Prsc.skipMany $ Prsc.char ' '
+  title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
+  Prsc.char ')'
+  return $ Link text href title
+  
 
 
 -- FIXME: Spec has rules on spaces around opening/closing signs
