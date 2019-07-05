@@ -28,5 +28,6 @@ renderSpan (Link text href (Just title)) =
 renderSpan (Link text href Nothing) =
   "<a href=\"" ++ href ++ "\">" ++ text ++ "</a>"
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
+renderSpan LineBreak = "<br />"
 -- Add cases when Span expands.
 

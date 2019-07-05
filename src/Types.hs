@@ -20,6 +20,7 @@ data Block
 data Span 
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
+    | LineBreak
     | Link { text :: String, href :: String, title :: Maybe String }
     | Emph [Span]
     deriving (Show, Eq)

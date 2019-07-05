@@ -66,12 +66,19 @@ parseParagraph = do
 
 parseSpan :: Parser Span
 parseSpan = Prsc.try parseNl
+        <|> Prsc.try parseLineBreak
         <|> Prsc.try parseSpace
         <|> Prsc.try parseLink
         <|> Prsc.try parseEmph
         <|> parseText
         <|> parseSymbol
 
+
+parseLineBreak :: Parser Span
+parseLineBreak = do
+  Prsc.count 2 $ Prsc.char ' '
+  Prsc.endOfLine
+  return LineBreak
 
 
 parseNl :: Parser Span
