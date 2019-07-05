@@ -85,6 +85,13 @@ spec = do
       `shouldBe`
       Paragraph [Text "This", Space, Text "[", Text "link", Space, Text "is", Space, Text "fake"]
 
+    it "handles unclosed links 2" $ do
+      testParser parseParagraph "This [link\nspans\nlines](www.com)"
+      `shouldBe`
+      Paragraph [Text "This", Space, Link "link spans lines" "www.com" Nothing]
+
+
+
   describe "parseLink" $ do
     it "handles simple link" $ do
       testParser parseLink "[Simple link](www.com \"Has title\")"
