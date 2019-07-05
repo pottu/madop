@@ -2,6 +2,9 @@
 module Renderer where
 
 import Types
+import Data.Maybe
+
+
 
 renderHTML :: Document -> String
 renderHTML = concatMap ((++"\n") . renderBlock)
@@ -20,8 +23,10 @@ renderSpans = concatMap renderSpan
 renderSpan :: Span -> String
 renderSpan (Text s) = s
 renderSpan (Space) = " "
-renderSpan (Link text href title) =
+renderSpan (Link text href (Just title)) =
   "<a href=\"" ++ href ++ "\" title=\"" ++ title ++ "\">" ++ text ++ "</a>"
+renderSpan (Link text href Nothing) =
+  "<a href=\"" ++ href ++ "\">" ++ text ++ "</a>"
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
 -- Add cases when Span expands.
 

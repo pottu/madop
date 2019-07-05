@@ -20,9 +20,14 @@ spec = do
       `shouldBe`
       " "
     it "handles link" $ do
-      renderSpan $ Link "A link" "www.com" "Some title"
+      renderSpan $ Link "A link" "www.com" (Just "Some title")
       `shouldBe`
       "<a href=\"www.com\" title=\"Some title\">A link</a>"
+
+    it "handles link without title" $ do
+      renderSpan $ Link "A link" "www.com" Nothing
+      `shouldBe`
+      "<a href=\"www.com\">A link</a>"
 
     it "handles emphasized text" $ do
       renderSpan $ Emph [Text "Emphasized", Space, Text "text"]

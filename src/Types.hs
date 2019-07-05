@@ -1,5 +1,7 @@
 module Types (Document, Block (..), Span (..)) where
 
+import Data.Maybe
+
 -- | Represents a documents element structure.
 -- TODO: Track metadata?
 type Document = [Block]
@@ -18,7 +20,7 @@ data Block
 data Span 
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
-    | Link { text :: String, href :: String, title :: String }
+    | Link { text :: String, href :: String, title :: Maybe String }
     | Emph [Span]
     deriving (Show, Eq)
 
