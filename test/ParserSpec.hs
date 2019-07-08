@@ -19,6 +19,26 @@ testParser p s =
 
 spec :: Spec
 spec = do
+  describe "parseDocument" $ do
+    it "handles simple document" $ do
+      testParser parseDocument "# Header\n\
+                               \With paragraph."
+      `shouldBe`
+      [Header 1 [Text "Header"], Paragraph [Text "With", Space, Text "paragraph."]]
+
+    it "handles emphasis opened and closed in different blocks 1" $ do
+      testParser parseDocument "# *Emph\n\
+                               \closing*"
+      `shouldBe`
+      [Header 1 [Text "*", Text "Emph"], Paragraph [Text "closing", Text "*"]]
+
+    it "handles emphasis opened and closed in different blocks 2" $ do
+      testParser parseDocument "_Emph\n\n\
+                               \closing_"
+      `shouldBe`
+      [Paragraph [Text "_", Text "Emph"], Paragraph [Text "closing", Text "_"]]
+
+
   describe "parseHeader" $ do
     it "handles simple h1" $ do
       testParser parseHeader "# Simple h1"
@@ -90,6 +110,16 @@ spec = do
       `shouldBe`
       Paragraph [Text "This", Space, Link "link spans lines" "www.com" Nothing]
 
+    it "handles nested emphasize, outer not closed" $ do
+      testParser parseParagraph "*_emph_asize"
+      `shouldBe`
+      Paragraph [Text "*", Emph [Text "emph"], Text "asize"]
+
+    it "handles nested emphasize, inner not closed" $ do
+      testParser parseParagraph "*_emph*asize"
+      `shouldBe`
+      Paragraph [Emph [Text "_", Text "emph"], Text "asize"]
+
 
 
   describe "parseLink" $ do
@@ -120,3 +150,4 @@ spec = do
       testParser parseEmph "*Nest _test_*"
       `shouldBe`
       Emph [Text "Nest", Space, Emph [Text "test"]]
+
