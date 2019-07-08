@@ -11,10 +11,14 @@ renderHTML = concatMap ((++"\n") . renderBlock)
 
 renderBlock :: Block -> String
 renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
+
 renderBlock (Header level spans) = 
   -- FIXME: Ensure level <= 6!
   let content = renderSpans spans
    in "<h" ++ show level ++ ">" ++ content ++ "</h" ++ show level ++ ">"
+
+renderBlock (CodeBlock lines) = 
+  "<pre><code>\n" ++ concatMap (++"\n") lines ++ "</pre></code>"
 -- Add cases when Block expands.
 
 renderSpans :: [Span] -> String

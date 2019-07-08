@@ -12,6 +12,7 @@ type Document = [Block]
 data Block 
     = Paragraph [Span]
     | Header Int [Span] 
+    | CodeBlock [String]
     deriving (Show, Eq)
 
 -- | Represents common inline elements 

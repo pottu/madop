@@ -8,6 +8,7 @@ import Data.Maybe
 
 data ParserState = InParagraph 
                  | InHeader
+                 | InCodeBlock
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
@@ -24,7 +25,7 @@ parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n\n
 
 
 parseDocument :: Parser Document
-parseDocument = Prsc.manyTill parseBlock documentEnding
+parseDocument = Prsc.manyTill parseBlock (Prsc.try documentEnding)
   where
     documentEnding = do
       Prsc.skipMany $ Prsc.oneOf " \n"
@@ -34,6 +35,7 @@ parseDocument = Prsc.manyTill parseBlock documentEnding
 
 parseBlock :: Parser Block
 parseBlock = Prsc.try parseHeader
+         <|> Prsc.try parseCodeBlock
          <|> parseParagraph
 
 
@@ -66,7 +68,20 @@ parseParagraph = do
       paragraphEnding = do
         Prsc.skipMany (Prsc.char ' ')
         Prsc.endOfLine
-        Prsc.many1 $ Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine
+        Prsc.many1 $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+
+
+
+parseCodeBlock :: Parser Block
+parseCodeBlock = do
+  Prsc.putState InCodeBlock
+  content <- Prsc.many1 codeLine
+  Prsc.skipMany $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+  return $ CodeBlock content
+    where
+      codeLine = (Prsc.count 4 (Prsc.char ' ') <|> Prsc.string "\t")
+              *> Prsc.manyTill Prsc.anyChar Prsc.endOfLine
+
 
 
 
