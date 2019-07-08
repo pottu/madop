@@ -37,6 +37,24 @@ spec = do
       `shouldBe`
       [Paragraph [Text "_", Text "Emph"], Paragraph [Text "closing", Text "_"]]
 
+    it "handles paragraphs and code blocks" $ do
+      testParser parseDocument "Some code:\n\n\
+                               \    fun foo:\n\
+                               \      doStuff\n\
+                               \    end"
+      `shouldBe`
+      [Paragraph [Text "Some", Space, Text "code:"], CodeBlock ["fun foo:", "  doStuff", "end"]]
+
+    it "handles multiple following code blocks" $ do
+      testParser parseDocument "    fun foo:\n\
+                               \      doStuff\n\
+                               \    end\n\
+                               \\n\
+                               \    fun foo:\n\
+                               \      doStuff\n\
+                               \    end"
+      `shouldBe`
+      [CodeBlock ["fun foo:", "  doStuff", "end"], CodeBlock ["fun foo:", "  doStuff", "end"]]
 
   describe "parseHeader" $ do
     it "handles simple h1" $ do
@@ -66,6 +84,7 @@ spec = do
 
 
 
+  -- Used to test parsing of multiple span elements as well.
   describe "parseParagraph" $ do
     it "handles simple sentence" $ do
         testParser parseParagraph "Lorem ipsum dolor sit amet." 
@@ -118,6 +137,27 @@ spec = do
       testParser parseParagraph "*_emph*asize"
       `shouldBe`
       Paragraph [Emph [Text "_", Text "emph"], Text "asize"]
+
+
+  describe "parseCodeBlock" $ do
+    it "handles space-indented code block" $ do
+      testParser parseCodeBlock "    fun pseudocode:\n\
+                                \      doSomething\n\
+                                \    end"
+      `shouldBe`
+      CodeBlock [ "fun pseudocode:"
+                , "  doSomething" 
+                , "end"
+                ]
+    it "handles tab-indented code block" $ do
+      testParser parseCodeBlock "\tfun pseudocode:\n\
+                                \\t  doSomething\n\
+                                \\tend"
+      `shouldBe`
+      CodeBlock [ "fun pseudocode:"
+                , "  doSomething" 
+                , "end"
+                ]
 
 
 
