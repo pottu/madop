@@ -1,8 +1,7 @@
 module ParserSpec (spec) where
 
 import Test.Hspec
-import Text.Parsec (parse)
-import Text.Parsec.String (Parser)
+import Text.Parsec (runParser)
 
 import Types
 import Parser
@@ -10,7 +9,7 @@ import Parser
 
 testParser :: Parser a -> String -> a 
 testParser p s = 
-  let parsed = parse p "" (s ++ "\n\n")
+  let parsed = runParser p InParagraph "" (s ++ "\n\n")
    in case parsed of
         Right doc -> doc
         Left e -> error ("Error when parsing \"" ++ s ++ "\"") -- Shouldn't happen.

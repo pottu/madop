@@ -4,15 +4,19 @@ module Parser where
 import Types
 import Control.Applicative ((<|>))
 import qualified Text.Parsec as Prsc
-import Text.Parsec.String (Parser)
 import Data.Maybe
+
+data ParserState = InParagraph 
+                 | InHeader
+                 deriving (Eq, Show)
+type Parser = Prsc.Parsec String ParserState
 
 mdSymbols = ['*', '_', '[', ']', '(', ')', '#']
 
 -- | Parse a string formatted with Markdown.
 -- FIXME: Adding newlines might not be the best way.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.parse parseDocument "" (s ++ "\n\n")
+parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n\n")
              in case parsed of
                 Right doc -> doc
                 Left e -> error (show e) -- Shouldn't happen.
@@ -37,6 +41,7 @@ parseBlock = Prsc.try parseHeader
 -- TODO: Handle Setext-style headers.
 parseHeader :: Parser Block
 parseHeader = do
+  Prsc.putState InHeader
   level <- length <$> Prsc.many1 (Prsc.char '#')
   Prsc.many1 Prsc.space
   header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
@@ -52,6 +57,7 @@ parseHeader = do
 
 parseParagraph :: Parser Block
 parseParagraph = do
+  Prsc.putState InParagraph 
   spans <- Prsc.many1 parseSpan
   paragraphEnding
   return $ Paragraph spans
@@ -81,11 +87,16 @@ parseLineBreak = do
   return LineBreak
 
 
+
 parseNl :: Parser Span
 parseNl = do
-  Prsc.endOfLine
-  Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
-  return Space
+  state <- Prsc.getState
+  case state of
+    InParagraph -> do
+      Prsc.endOfLine
+      Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+      return Space
+    _ -> Prsc.unexpected "Rule only applies in paragraph"
 
 
 
@@ -147,9 +158,6 @@ parseEmph = do
   content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char opening) *> parseSpan
   Prsc.char opening
   return $ Emph content
-
-
-
 
 
 
