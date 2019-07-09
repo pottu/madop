@@ -52,3 +52,13 @@ spec = do
                               Space, Text "sit", Space, Text "amet."]
       `shouldBe`
       "<p>Lorem ipsum dolor sit amet.</p>"
+
+    it "renders simple pseudocode" $ do
+      renderBlock $ CodeBlock ["fun foo:", "  doBar()", "end"]
+      `shouldBe`
+      "<pre><code>fun foo:\n  doBar()\nend\n</code></pre>"
+
+    it "renders simple HTML (with <, >, & conversion)" $ do
+      renderBlock $ CodeBlock ["<div id=\"copy\">", "  &copy; Foo Inc.", "</div>"]
+      `shouldBe`
+      "<pre><code>&lt;div id=\"copy\"&gt;\n  &amp;copy; Foo Inc.\n&lt;/div&gt;\n</code></pre>"
