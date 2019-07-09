@@ -14,6 +14,8 @@ type Parser = Prsc.Parsec String ParserState
 
 mdSymbols = ['*', '_', '[', ']', '(', ')', '#', '`']
 
+
+
 -- | Parse a string formatted with Markdown.
 -- FIXME: Adding newlines might not be the best way.
 parseMd :: String -> Document
@@ -84,7 +86,6 @@ parseCodeBlock = do
 
 
 
-
 parseSpan :: Parser Span
 parseSpan = Prsc.try parseNl
         <|> Prsc.try parseLineBreak
@@ -95,6 +96,7 @@ parseSpan = Prsc.try parseNl
         <|> Prsc.try parseCode
         <|> parseText
         <|> parseSymbol
+
 
 
 parseLineBreak :: Parser Span
@@ -137,6 +139,7 @@ parseSpace = do
   return Space
 
 
+
 parseTextBetween :: Char -> Char -> Parser a -> Parser [a]
 parseTextBetween open close p = do
   Prsc.char open
@@ -145,8 +148,7 @@ parseTextBetween open close p = do
   return content
 
 
--- Parses any char but respects block endings.
--- As with parseNl it only cares for paragraphs atm.
+
 parseChar :: Parser Char 
 parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
 
@@ -171,7 +173,6 @@ parseLink = do
 parseEmph :: Parser Span
 parseEmph = do
   opening <- Prsc.char '*' <|> Prsc.char '_'
-  -- Look into if why Prsc.manyTill is not sufficient here:
   content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char opening) *> parseSpan
   Prsc.char opening
   return $ Emph content
