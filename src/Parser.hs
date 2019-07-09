@@ -12,7 +12,7 @@ data ParserState = InParagraph
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
-mdSymbols = ['*', '_', '[', ']', '(', ')', '#']
+mdSymbols = ['*', '_', '[', ']', '(', ')', '#', '`']
 
 -- | Parse a string formatted with Markdown.
 -- FIXME: Adding newlines might not be the best way.
@@ -92,6 +92,7 @@ parseSpan = Prsc.try parseNl
         <|> Prsc.try parseLink
         <|> Prsc.try parseStrong
         <|> Prsc.try parseEmph
+        <|> Prsc.try parseCode
         <|> parseText
         <|> parseSymbol
 
@@ -183,3 +184,15 @@ parseStrong = do
   content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.string opening) *> parseSpan
   Prsc.string opening
   return $ Strong content
+
+
+
+parseCode :: Parser Span
+parseCode = do
+  opening <- Prsc.many1 (Prsc.char '`') <* Prsc.optional (Prsc.char ' ')
+  let closing = (Prsc.optional (Prsc.char ' ')) *> Prsc.string opening
+   in do
+        content <- Prsc.many1 $ Prsc.notFollowedBy closing *> parseChar
+        closing
+        return $ Code content
+

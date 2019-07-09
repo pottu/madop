@@ -56,6 +56,19 @@ spec = do
       `shouldBe`
       [CodeBlock ["fun foo:", "  doStuff", "end"], CodeBlock ["fun foo:", "  doStuff", "end"]]
 
+    it "handles code-span opened and closed in different blocks 1" $ do
+      testParser parseDocument "`Open\n\nClose`"
+      `shouldBe`
+      [Paragraph [Text "`", Text "Open"], Paragraph [Text "Close", Text "`"]]
+
+    it "handles code-span opened and closed in different blocks 2" $ do
+      testParser parseDocument "# Header `Open\nClose`"
+      `shouldBe`
+      [Header 1 [Text "Header", Space, Text "`", Text "Open"], 
+       Paragraph [Text "Close", Text "`"]]
+
+
+
   describe "parseHeader" $ do
     it "handles simple h1" $ do
       testParser parseHeader "# Simple h1"
@@ -138,6 +151,11 @@ spec = do
       `shouldBe`
       Paragraph [Emph [Text "_", Text "emph"], Text "asize"]
 
+    it "handles code spanning two lines" $ do
+      testParser parseParagraph "Has `code\nover lines`"
+      `shouldBe`
+      Paragraph [Text "Has", Space, Code "code over lines"]
+
 
   describe "parseCodeBlock" $ do
     it "handles space-indented code block" $ do
@@ -217,5 +235,34 @@ spec = do
       testParser parseStrong "***emph***"
       `shouldBe`
       Strong [Emph [Text "emph"]]
+
+
+
+  describe "parseCode" $ do
+    it "handles simple code span" $ do
+      testParser parseCode "`doStuff()`"
+      `shouldBe`
+      Code "doStuff()"
+
+    it "handles code span started with ```" $ do
+      testParser parseCode "```doStuff()```"
+      `shouldBe`
+      Code "doStuff()"
+
+    it "handles code span with ` inside" $ do
+      testParser parseCode "```doStuff() `and` doMore()```"
+      `shouldBe`
+      Code "doStuff() `and` doMore()"
+
+    it "ignores one space after opening & before ending" $ do
+      testParser parseCode "`` `foo` ``"
+      `shouldBe`
+      Code "`foo`"
+
+    it "handles a single ` inside" $ do
+      testParser parseCode "`` ` ``"
+      `shouldBe`
+      Code "`"
+
 
 

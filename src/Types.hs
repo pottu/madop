@@ -25,5 +25,6 @@ data Span
     | Link { text :: String, href :: String, title :: Maybe String }
     | Emph [Span]
     | Strong [Span]
+    | Code String
     deriving (Show, Eq)
 

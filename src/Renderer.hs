@@ -44,4 +44,5 @@ renderSpan (Link text href Nothing) =
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
 renderSpan (Strong content) = "<strong>" ++ renderSpans content ++ "</strong>"
 renderSpan LineBreak = "<br />"
+renderSpan (Code content) = "<code>" ++ content ++ "</code>"
 

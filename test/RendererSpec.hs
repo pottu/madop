@@ -39,6 +39,11 @@ spec = do
       `shouldBe`
       "<strong>Strong text</strong>"
 
+    it "handles code span" $ do
+      renderSpan $ Code "for x in y do z"
+      `shouldBe`
+      "<code>for x in y do z</code>"
+
 
 
   describe "renderBlock" $ do
