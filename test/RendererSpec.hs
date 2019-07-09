@@ -44,6 +44,11 @@ spec = do
       `shouldBe`
       "<code>for x in y do z</code>"
 
+    it "handles code span with encoded chars" $ do
+      renderSpan $ Code "<div>&copy Foo Inc.</div>"
+      `shouldBe`
+      "<code>&lt;div&gt;&amp;copy Foo Inc.&lt;/div&gt;</code>"
+
 
 
   describe "renderBlock" $ do

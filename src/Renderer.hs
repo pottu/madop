@@ -5,6 +5,12 @@ import Types
 import Data.Maybe
 
 
+encode :: Char -> String
+encode '<' = "&lt;"
+encode '>' = "&gt;"
+encode '&' = "&amp;"
+encode  c  = [c]
+
 
 renderHTML :: Document -> String
 renderHTML = concatMap ((++"\n") . renderBlock)
@@ -21,13 +27,8 @@ renderBlock (CodeBlock lines) =
     where
       renderLines :: [String] -> String
       renderLines [] = ""
-      renderLines (l:ls) = concatMap convert l ++ "\n" ++ renderLines ls 
+      renderLines (l:ls) = concatMap encode l ++ "\n" ++ renderLines ls 
       
-      convert :: Char -> String
-      convert '<' = "&lt;"
-      convert '>' = "&gt;"
-      convert '&' = "&amp;"
-      convert  c  = [c]
 
 
 
@@ -44,5 +45,5 @@ renderSpan (Link text href Nothing) =
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
 renderSpan (Strong content) = "<strong>" ++ renderSpans content ++ "</strong>"
 renderSpan LineBreak = "<br />"
-renderSpan (Code content) = "<code>" ++ content ++ "</code>"
+renderSpan (Code content) = "<code>" ++ concatMap encode content ++ "</code>"
 
