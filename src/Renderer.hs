@@ -18,8 +18,19 @@ renderBlock (Header level spans) =
    in "<h" ++ show level ++ ">" ++ content ++ "</h" ++ show level ++ ">"
 
 renderBlock (CodeBlock lines) = 
-  "<pre><code>\n" ++ concatMap (++"\n") lines ++ "</pre></code>"
--- Add cases when Block expands.
+  "<pre><code>" ++ renderLines lines ++ "</code></pre>"
+    where
+      renderLines :: [String] -> String
+      renderLines [] = ""
+      renderLines (l:ls) = concatMap convert l ++ "\n" ++ renderLines ls 
+      
+      convert :: Char -> String
+      convert '<' = "&lt;"
+      convert '>' = "&gt;"
+      convert '&' = "&amp;"
+      convert  c  = [c]
+
+
 
 renderSpans :: [Span] -> String
 renderSpans = concatMap renderSpan
