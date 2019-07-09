@@ -3,3 +3,4 @@ madop.cabal
 *~
 *.swp
 *.swo
+tmp*
