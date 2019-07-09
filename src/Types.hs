@@ -24,5 +24,6 @@ data Span
     | LineBreak
     | Link { text :: String, href :: String, title :: Maybe String }
     | Emph [Span]
+    | Strong [Span]
     deriving (Show, Eq)
 

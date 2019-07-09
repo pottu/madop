@@ -14,8 +14,7 @@ renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
 
 renderBlock (Header level spans) = 
   -- FIXME: Ensure level <= 6!
-  let content = renderSpans spans
-   in "<h" ++ show level ++ ">" ++ content ++ "</h" ++ show level ++ ">"
+   "<h" ++ show level ++ ">" ++ renderSpans spans ++ "</h" ++ show level ++ ">"
 
 renderBlock (CodeBlock lines) = 
   "<pre><code>" ++ renderLines lines ++ "</code></pre>"
@@ -43,6 +42,6 @@ renderSpan (Link text href (Just title)) =
 renderSpan (Link text href Nothing) =
   "<a href=\"" ++ href ++ "\">" ++ text ++ "</a>"
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
+renderSpan (Strong content) = "<strong>" ++ renderSpans content ++ "</strong>"
 renderSpan LineBreak = "<br />"
--- Add cases when Span expands.
 

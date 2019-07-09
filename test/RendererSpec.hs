@@ -34,6 +34,11 @@ spec = do
       `shouldBe`
       "<em>Emphasized text</em>"
 
+    it "handles strong text" $ do
+      renderSpan $ Strong [Text "Strong", Space, Text "text"]
+      `shouldBe`
+      "<strong>Strong text</strong>"
+
 
 
   describe "renderBlock" $ do

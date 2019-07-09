@@ -190,3 +190,32 @@ spec = do
       `shouldBe`
       Emph [Text "Nest", Space, Emph [Text "test"]]
 
+
+
+  describe "parseStrong" $ do
+    it "handles strong with *" $ do
+      testParser parseStrong "**Asterisk Strong**"
+      `shouldBe`
+      Strong [Text "Asterisk", Space, Text "Strong"]
+
+    it "handles strong with _" $ do
+      testParser parseStrong "__Underscore Strong__"
+      `shouldBe`
+      Strong [Text "Underscore", Space, Text "Strong"]
+
+    it "handles nested strong" $ do
+      testParser parseStrong "**Nest __test__**"
+      `shouldBe`
+      Strong [Text "Nest", Space, Strong [Text "test"]]
+
+    it "handles emphasize in strong 1" $ do
+      testParser parseStrong "**_emph_**"
+      `shouldBe`
+      Strong [Emph [Text "emph"]]
+
+    it "handles emphasize in strong 2" $ do
+      testParser parseStrong "***emph***"
+      `shouldBe`
+      Strong [Emph [Text "emph"]]
+
+

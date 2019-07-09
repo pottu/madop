@@ -90,6 +90,7 @@ parseSpan = Prsc.try parseNl
         <|> Prsc.try parseLineBreak
         <|> Prsc.try parseSpace
         <|> Prsc.try parseLink
+        <|> Prsc.try parseStrong
         <|> Prsc.try parseEmph
         <|> parseText
         <|> parseSymbol
@@ -176,3 +177,9 @@ parseEmph = do
 
 
 
+parseStrong :: Parser Span
+parseStrong = do
+  opening <- Prsc.string "**" <|> Prsc.string "__"
+  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.string opening) *> parseSpan
+  Prsc.string opening
+  return $ Strong content
