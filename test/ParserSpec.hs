@@ -192,6 +192,19 @@ spec = do
 
 
   
+  describe "parseImage" $ do
+    it "handles simple image" $ do
+      testParser parseImage "![Some img](/foo/bar.jpg \"My cool image\")"
+      `shouldBe`
+      Image "/foo/bar.jpg" "Some img" (Just "My cool image")
+
+    it "handles image without title" $ do
+      testParser parseImage "![Some img](/foo/bar.jpg)"
+      `shouldBe`
+      Image "/foo/bar.jpg" "Some img" Nothing
+
+
+  
   describe "parseEmph" $ do
     it "handles emphasize with *" $ do
       testParser parseEmph "*Asterisk Emphasize*"

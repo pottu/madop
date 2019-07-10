@@ -23,6 +23,7 @@ data Span
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
     | LineBreak
     | Link { text :: String, href :: String, title :: Maybe String }
+    | Image { path :: String, alt :: String, title :: Maybe String }
     | Emph [Span]
     | Strong [Span]
     | Code String

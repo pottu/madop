@@ -12,7 +12,7 @@ data ParserState = InParagraph
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
-mdSymbols = ['*', '_', '[', ']', '(', ')', '#', '`']
+mdSymbols = ['*', '_', '[', ']', '(', ')', '#', '`', '!']
 
 
 
@@ -90,6 +90,7 @@ parseSpan :: Parser Span
 parseSpan = Prsc.try parseNl
         <|> Prsc.try parseLineBreak
         <|> Prsc.try parseSpace
+        <|> Prsc.try parseImage
         <|> Prsc.try parseLink
         <|> Prsc.try parseStrong
         <|> Prsc.try parseEmph
@@ -154,7 +155,6 @@ parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
 
 
 
-
 -- TODO: Handle reference-style links.
 parseLink :: Parser Span 
 parseLink = do
@@ -166,8 +166,24 @@ parseLink = do
   title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
   Prsc.char ')'
   return $ Link text href title
-  
 
+
+
+-- Shares almost all code with parseLink
+-- TODO: Handle reference-style images.
+parseImage :: Parser Span
+parseImage = do
+  Prsc.char '!'
+  alt <- parseTextBetween '[' ']' parseChar
+  Prsc.char '('
+  path <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
+                    *> parseChar
+  Prsc.skipMany $ Prsc.char ' '
+  title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
+  Prsc.char ')'
+  return $ Image path alt title
+  
+  
 
 -- FIXME: Spec has rules on spaces around opening/closing signs
 parseEmph :: Parser Span

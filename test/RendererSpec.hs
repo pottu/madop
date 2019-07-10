@@ -29,6 +29,16 @@ spec = do
       `shouldBe`
       "<a href=\"www.com\">A link</a>"
 
+    it "handles image" $ do
+      renderSpan $ Image "/foo/bar.jpg" "An image" (Just "Some title")
+      `shouldBe`
+      "<img src=\"/foo/bar.jpg\" alt=\"An image\" title=\"Some title\" />"
+
+    it "handles image without title" $ do
+      renderSpan $ Image "www.com/foo.jpg" "An image" Nothing
+      `shouldBe`
+      "<img src=\"www.com/foo.jpg\" alt=\"An image\" />"
+
     it "handles emphasized text" $ do
       renderSpan $ Emph [Text "Emphasized", Space, Text "text"]
       `shouldBe`
