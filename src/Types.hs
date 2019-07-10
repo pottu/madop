@@ -13,6 +13,7 @@ data Block
     = Paragraph [Span]
     | Header Int [Span] 
     | CodeBlock [String]
+    | HorizontalRule
     deriving (Show, Eq)
 
 -- | Represents common inline elements 

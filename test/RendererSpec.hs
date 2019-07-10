@@ -87,3 +87,8 @@ spec = do
       renderBlock $ CodeBlock ["<div id=\"copy\">", "  &copy; Foo Inc.", "</div>"]
       `shouldBe`
       "<pre><code>&lt;div id=\"copy\"&gt;\n  &amp;copy; Foo Inc.\n&lt;/div&gt;\n</code></pre>"
+
+    it "renders horizontal rule" $ do
+      renderBlock $ HorizontalRule
+      `shouldBe`
+      "<hr />"

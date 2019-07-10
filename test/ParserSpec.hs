@@ -178,6 +178,32 @@ spec = do
                 ]
 
 
+  describe "parseHorizontalRule" $ do
+    it "handles compact hr" $ do
+      testParser parseHorizontalRule "***"
+      `shouldBe`
+      HorizontalRule
+
+    it "handles spaces between hr" $ do
+      testParser parseHorizontalRule "* * *"
+      `shouldBe`
+      HorizontalRule
+
+    it "handles multiple signs hr" $ do
+      testParser parseHorizontalRule "----------------------"
+      `shouldBe`
+      HorizontalRule
+
+    it "handles random spacing" $ do
+      testParser parseHorizontalRule "___ _ _    _     __  _   _"
+      `shouldBe`
+      HorizontalRule
+
+    it "handles opening & closing spaces" $ do
+      testParser parseHorizontalRule "  *  *  *  "
+      `shouldBe`
+      HorizontalRule
+
 
   describe "parseLink" $ do
     it "handles simple link" $ do

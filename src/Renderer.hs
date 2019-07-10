@@ -4,7 +4,6 @@ module Renderer where
 import Types
 import Data.Maybe
 
-
 encode :: Char -> String
 encode '<' = "&lt;"
 encode '>' = "&gt;"
@@ -28,6 +27,8 @@ renderBlock (CodeBlock lines) =
       renderLines :: [String] -> String
       renderLines [] = ""
       renderLines (l:ls) = concatMap encode l ++ "\n" ++ renderLines ls 
+
+renderBlock HorizontalRule = "<hr />"
       
 
 

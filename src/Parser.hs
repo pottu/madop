@@ -38,6 +38,7 @@ parseDocument = Prsc.manyTill parseBlock (Prsc.try documentEnding)
 parseBlock :: Parser Block
 parseBlock = Prsc.try parseHeader
          <|> Prsc.try parseCodeBlock
+         <|> Prsc.try parseHorizontalRule
          <|> parseParagraph
 
 
@@ -83,6 +84,17 @@ parseCodeBlock = do
     where
       codeLine = (Prsc.count 4 (Prsc.char ' ') <|> Prsc.string "\t")
               *> Prsc.manyTill Prsc.anyChar Prsc.endOfLine
+
+
+
+parseHorizontalRule :: Parser Block
+parseHorizontalRule = do
+  Prsc.skipMany $ Prsc.char ' '
+  opening <- Prsc.oneOf "*-_"
+  Prsc.count 2 ((Prsc.skipMany (Prsc.char ' ')) *> Prsc.char opening)
+  Prsc.skipMany $ Prsc.char ' ' <|> Prsc.char opening
+  Prsc.endOfLine
+  return HorizontalRule
 
 
 
