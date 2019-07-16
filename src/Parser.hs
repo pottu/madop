@@ -12,7 +12,7 @@ data ParserState = InParagraph
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
-mdSymbols = ['*', '_', '[', ']', '(', ')', '#', '`', '!']
+mdSymbols = ['-', '*', '_', '[', ']', '(', ')', '#', '`', '!']
 
 
 
