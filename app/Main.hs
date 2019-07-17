@@ -5,8 +5,9 @@ import Parser (parseMd)
 import Renderer (renderHTML)
 import Text.Parsec as Prsc
 import Text.Parsec.String (Parser)
+import System.IO as IO
 
-data Input = File String | Stdin 
+type Input = IO String
 
 data Exec = Default Input 
           | Output String Input 
@@ -28,21 +29,13 @@ main = do
   let parsed = Prsc.parse parseArgs "" (unwords args)
    in either (error . show) execute parsed
   where
-    execute (Default (File file)) = do
-      input <- readFile file
-      putStr $ renderHTML $ parseMd input
+    execute (Default input) = do
+      contents <- input 
+      putStr $ renderHTML $ parseMd contents
 
-    execute (Default Stdin) = do
-      input <- getContents
-      putStr $ renderHTML $ parseMd input
-
-    execute (Output outfile (File file)) = do
-      input <- readFile file 
-      writeFile outfile (renderHTML (parseMd input))
-
-    execute (Output outfile Stdin) = do
-      input <- getContents
-      writeFile outfile (renderHTML (parseMd input))
+    execute (Output outfile input) = do
+      contents <- input 
+      writeFile outfile (renderHTML (parseMd contents))
 
     execute Help = putStrLn usageMsg
 
@@ -75,12 +68,12 @@ help = do
 stdinInput :: Parser Input 
 stdinInput = do
   Prsc.string "--stdin"
-  return $ Stdin 
+  return IO.getContents 
   
 fileInput :: Parser Input 
 fileInput = do
   file <- Prsc.many1 Prsc.anyChar 
-  return $ File file
+  return $ IO.readFile file
 
 
 
