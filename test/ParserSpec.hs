@@ -67,6 +67,11 @@ spec = do
       [Header 1 [Text "Header", Space, Text "`", Text "Open"], 
        Paragraph [Text "Close", Text "`"]]
 
+    it "handles when a header ends a paragraph block" $ do
+      testParser parseDocument "A paragraph.\n# Header"
+      `shouldBe`
+      [Paragraph [Text "A", Space, Text "paragraph"], Header 1 [Text "Header"]]
+
 
 
   describe "parseHeader" $ do
