@@ -54,7 +54,7 @@ pDefault = do
   where
     fileOutput :: Parser Output
     fileOutput = do
-      Prsc.string "-o"
+      Prsc.try (Prsc.string "-o") <|> Prsc.string "--output"
       Prsc.many1 $ Prsc.char ' '
       outfile <- Prsc.manyTill Prsc.anyChar (Prsc.char ' ')
       return $ writeFile outfile
