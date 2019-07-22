@@ -69,9 +69,9 @@ parseParagraph = do
     where
       -- FIXME: Refactor.
       paragraphEnding = do
-        Prsc.skipMany (Prsc.char ' ')
+        Prsc.skipMany (Prsc.char ' ') -- Possibly shouldn't be here?
         Prsc.endOfLine
-        Prsc.many1 $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+        Prsc.many $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
 
 
 
@@ -127,6 +127,8 @@ parseNl = do
     InParagraph -> do
       Prsc.endOfLine
       Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+      Prsc.notFollowedBy parseHeader
+      Prsc.notFollowedBy parseHorizontalRule
       return Space
     _ -> Prsc.unexpected "Rule only applies in paragraph"
 
