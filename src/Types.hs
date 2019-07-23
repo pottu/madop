@@ -13,6 +13,7 @@ data Block
     = Paragraph [Span]
     | Header Int [Span] 
     | CodeBlock [String]
+    | HtmlBlock String
     | HorizontalRule
     deriving (Show, Eq)
 

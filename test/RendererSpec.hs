@@ -99,3 +99,9 @@ spec = do
       renderBlock $ HorizontalRule
       `shouldBe`
       "<hr />"
+
+    it "renders html block" $ do
+      renderBlock $ HtmlBlock "<ol>\n  <li>item</li>\n</ol>"
+      `shouldBe`
+      "<ol>\n  <li>item</li>\n</ol>"
+

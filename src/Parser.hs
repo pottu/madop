@@ -51,6 +51,7 @@ parseDocument = Prsc.manyTill parseBlock (Prsc.try documentEnding)
 parseBlock :: Parser Block
 parseBlock = Prsc.try parseHeader
          <|> Prsc.try parseCodeBlock
+         <|> Prsc.try parseHtmlBlock
          <|> Prsc.try parseHorizontalRule
          <|> parseParagraph
 
@@ -110,6 +111,23 @@ parseHorizontalRule = do
   return HorizontalRule
 
 
+-- Note: doesn't enforce blanklines around block
+parseHtmlBlock :: Parser Block
+parseHtmlBlock = do
+  tag <- parseTextBetween '<' '>' Prsc.letter
+  if tag `notElem` htmlBlocks
+    then Prsc.unexpected "Not a valid HTML-tag."     
+    else do
+      let closing = "</" ++ tag ++ ">"
+      block <- Prsc.many $ Prsc.notFollowedBy (Prsc.string closing) *> Prsc.anyChar 
+      Prsc.string closing 
+      Prsc.many1 Prsc.endOfLine
+      return $ HtmlBlock $ "<" ++ tag ++ ">" ++ block ++ closing
+      
+
+  
+
+
 
 parseSpan :: Parser Span
 parseSpan = Prsc.try parseNl
@@ -142,6 +160,7 @@ parseNl = do
       Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
       Prsc.notFollowedBy parseHeader
       Prsc.notFollowedBy parseHorizontalRule
+      Prsc.notFollowedBy parseHtmlBlock
       return Space
     _ -> Prsc.unexpected "Rule only applies in paragraph"
 

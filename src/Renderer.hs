@@ -28,6 +28,8 @@ renderBlock (CodeBlock lines) =
       renderLines [] = ""
       renderLines (l:ls) = concatMap encode l ++ "\n" ++ renderLines ls 
 
+renderBlock (HtmlBlock s) = s
+
 renderBlock HorizontalRule = "<hr />"
       
 

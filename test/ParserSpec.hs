@@ -84,6 +84,18 @@ spec = do
       [Paragraph [Text "Some", Space, Text "_", Text "emph"], HorizontalRule,
        Paragraph [Text "ends", Text "_", Space, Text "here"]]
 
+    it "handles html-block in between paragraphs" $ do
+      testParser parseDocument "Some text.\n\n<ul><li>Item</li></ul>\n\nMore text."
+      `shouldBe`
+      [Paragraph [Text "Some", Space, Text "text."], HtmlBlock "<ul><li>Item</li></ul>",
+       Paragraph [Text "More", Space, Text "text."]]
+
+    it "handles when a html-block interrupts paragraph" $ do
+      testParser parseDocument "Some text.\n<ul><li>Item</li></ul>\nMore text."
+      `shouldBe`
+      [Paragraph [Text "Some", Space, Text "text."], HtmlBlock "<ul><li>Item</li></ul>",
+       Paragraph [Text "More", Space, Text "text."]]
+
 
 
   describe "parseHeader" $ do
@@ -193,6 +205,18 @@ spec = do
                 , "  doSomething" 
                 , "end"
                 ]
+
+  describe "parseHtmlBlock" $ do
+    it "handles simple html block" $ do
+      testParser parseHtmlBlock "<ol>\n  <li>Item</li>\n</ol>"
+      `shouldBe`
+      HtmlBlock "<ol>\n  <li>Item</li>\n</ol>"
+
+    it "handles simple one-liner html block" $ do
+      testParser parseHtmlBlock "<div><p>Some text</p></div>"
+      `shouldBe`
+      HtmlBlock "<div><p>Some text</p></div>"
+
 
 
   describe "parseHorizontalRule" $ do
