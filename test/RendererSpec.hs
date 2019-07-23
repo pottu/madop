@@ -83,10 +83,17 @@ spec = do
       `shouldBe`
       "<pre><code>fun foo:\n  doBar()\nend\n</code></pre>"
 
-    it "renders simple HTML (with <, >, & conversion)" $ do
+    it "renders code block (with <, >, & conversion)" $ do
       renderBlock $ CodeBlock ["<div id=\"copy\">", "  &copy; Foo Inc.", "</div>"]
       `shouldBe`
       "<pre><code>&lt;div id=\"copy\"&gt;\n  &amp;copy; Foo Inc.\n&lt;/div&gt;\n</code></pre>"
+
+    it "renders paragraph with <, >, & converison" $ do
+      renderBlock $ Paragraph [Text "AT&T", Space, Text "has", Space,
+        Text "revenue", Space, Text ">", Text "$100B", Space, Text "but",
+        Space, Text "<", Text "$1000B."]
+      `shouldBe`
+      "<p>AT&amp;T has revenue &gt;$100B but &lt;$1000B.</p>"
 
     it "renders horizontal rule" $ do
       renderBlock $ HorizontalRule
