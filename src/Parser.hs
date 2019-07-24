@@ -255,9 +255,8 @@ parseCode :: Parser Span
 parseCode = do
   opening <- Prsc.many1 (Prsc.char '`') <* Prsc.optional (Prsc.char ' ')
   let closing = (Prsc.optional (Prsc.char ' ')) *> Prsc.string opening
-   in do
-        content <- Prsc.many1 $ Prsc.notFollowedBy closing *> parseChar
-        closing
-        return $ Code content
+  content <- Prsc.many1 $ Prsc.notFollowedBy closing *> parseChar
+  closing
+  return $ Code content
 
     
