@@ -30,19 +30,16 @@ htmlSpans =
 
 
 -- | Parse a string formatted with Markdown.
--- FIXME: Adding newlines might not be the best way.
 parseMd :: String -> Document
 parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n\n")
-             in case parsed of
-                Right doc -> doc
-                Left e -> error (show e) -- Shouldn't happen.
+             in either (error . show) id parsed
 
 
 
 parseDocument :: Parser Document
-parseDocument = Prsc.manyTill parseBlock (Prsc.try documentEnding)
+parseDocument = Prsc.manyTill parseBlock (Prsc.try ending)
   where
-    documentEnding = do
+    ending = do
       Prsc.skipMany $ Prsc.oneOf " \n"
       Prsc.eof
 
@@ -72,7 +69,7 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
           Prsc.skipMany (Prsc.char ' ')
           Prsc.skipMany (Prsc.char '#')
           Prsc.skipMany (Prsc.char ' ')
-          Prsc.endOfLine
+          Prsc.many1 Prsc.endOfLine
 
     setextHeader :: Parser Block
     setextHeader = do
@@ -91,12 +88,10 @@ parseParagraph :: Parser Block
 parseParagraph = do
   Prsc.putState InParagraph 
   spans <- Prsc.many1 parseSpan
-  paragraphEnding
+  ending
   return $ Paragraph spans
     where
-      -- FIXME: Refactor.
-      paragraphEnding = do
-        Prsc.skipMany (Prsc.char ' ') -- Possibly shouldn't be here?
+      ending = do
         Prsc.endOfLine
         Prsc.many $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
 
