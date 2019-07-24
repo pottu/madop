@@ -24,6 +24,7 @@ data Span
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
     | LineBreak
+    | SoftBreak
     | Link { text :: String, href :: String, title :: Maybe String }
     | Image { path :: String, alt :: String, title :: Maybe String }
     | Emph [Span]

@@ -144,7 +144,7 @@ spec = do
     it "handles soft break" $ do
         testParser parseParagraph "Lorem ipsum\ndolor sit amet." 
         `shouldBe` 
-        (Paragraph [Text "Lorem", Space, Text "ipsum", Space, 
+        (Paragraph [Text "Lorem", Space, Text "ipsum", SoftBreak, 
                     Text "dolor", Space, Text "sit", Space, Text "amet."])
 
     it "handles emphasis" $ do
@@ -155,7 +155,7 @@ spec = do
     it "handles emphasis spanning two lines" $ do
       testParser parseParagraph "Has *emphasis\nover lines*"
       `shouldBe`
-      Paragraph [Text "Has", Space, Emph [Text "emphasis", Space, Text "over", Space, Text "lines"]]
+      Paragraph [Text "Has", Space, Emph [Text "emphasis", SoftBreak, Text "over", Space, Text "lines"]]
 
     -- These types of tests should now be done with testBadInput instead.
     it "handles unclosed emphasis" $ do

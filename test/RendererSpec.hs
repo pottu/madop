@@ -59,6 +59,11 @@ spec = do
       `shouldBe`
       "<code>&lt;div&gt;&amp;copy Foo Inc.&lt;/div&gt;</code>"
 
+    it "renders soft break" $ do
+      renderSpan SoftBreak 
+      `shouldBe`
+      "\n"
+
 
 
   describe "renderBlock" $ do
@@ -104,4 +109,5 @@ spec = do
       renderBlock $ HtmlBlock "<ol>\n  <li>item</li>\n</ol>"
       `shouldBe`
       "<ol>\n  <li>item</li>\n</ol>"
+
 

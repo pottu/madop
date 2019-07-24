@@ -161,7 +161,7 @@ parseNl = do
       Prsc.notFollowedBy parseHeader
       Prsc.notFollowedBy parseHorizontalRule
       Prsc.notFollowedBy parseHtmlBlock
-      return Space
+      return SoftBreak 
     _ -> Prsc.unexpected "Rule only applies in paragraph"
 
 
@@ -259,3 +259,4 @@ parseCode = do
         closing
         return $ Code content
 
+    
