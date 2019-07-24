@@ -79,12 +79,6 @@ spec = do
       `shouldBe`
       [Paragraph [Text "A", Space, Text "paragraph."], Header 1 [Text "Header"]]
 
-    it "handles when a hr ends a paragraph block" $ do
-      testParser parseDocument "A paragraph.\n---\nAnother paragraph."
-      `shouldBe`
-      [Paragraph [Text "A", Space, Text "paragraph."], HorizontalRule, 
-       Paragraph [Text "Another", Space, Text "paragraph."]]
-
     it "handles when a hr interrupts an emphasis element" $ do
       testParser parseDocument "Some _emph\n___\nends_ here"
       `shouldBe`
@@ -106,30 +100,65 @@ spec = do
 
 
   describe "parseHeader" $ do
-    it "handles simple h1" $ do
+    it "handles simple h1 (atx)" $ do
       testParser parseHeader "# Simple h1"
       `shouldBe`
       (Header 1 [Text "Simple", Space, Text "h1"])
 
-    it "handles simple h4" $ do
+    it "handles simple h4 (atx)" $ do
       testParser parseHeader "#### Simple h4"
       `shouldBe`
       (Header 4 [Text "Simple", Space, Text "h4"])
 
-    it "handles closing hashes" $ do
+    it "handles closing hashes (atx)" $ do
       testParser parseHeader "### Closing hashes ####"
       `shouldBe`
       (Header 3 [Text "Closing", Space, Text "hashes"])
 
-    it "handles emphasis" $ do
+    it "handles emphasis (atx)" $ do
       testParser parseHeader "# Has *emph*"
       `shouldBe`
       Header 1 [Text "Has", Space, Emph [Text "emph"]]
 
-    it "handles unclosed emphasis" $ do
+    it "handles unclosed emphasis (atx)" $ do
       testParser parseHeader "# No *emph"
       `shouldBe`
       Header 1 [Text "No", Space, Text "*", Text "emph"]
+
+    it "handles simple h1 (setext)" $ do
+      testParser parseHeader "Simple h1\n========="
+      `shouldBe`
+      Header 1 [Text "Simple", Space, Text "h1"]
+
+    it "handles simple h2 (setext)" $ do
+      testParser parseHeader "Simple h2\n---------"
+      `shouldBe`
+      Header 2 [Text "Simple", Space, Text "h2"]
+
+    it "handles random underline length 1 (setext)" $ do
+      testParser parseHeader "Header\n="
+      `shouldBe`
+      Header 1 [Text "Header"]
+
+    it "handles random underline length 2 (setext)" $ do
+      testParser parseHeader "Header\n===="
+      `shouldBe`
+      Header 1 [Text "Header"]
+
+    it "handles random underline length 2 (setext)" $ do
+      testParser parseHeader "Header\n============================"
+      `shouldBe`
+      Header 1 [Text "Header"]
+
+    it "handles header starting with # (setext)" $ do
+      testParser parseHeader "#Header\n======="
+      `shouldBe`
+      Header 1 [Text "#", Text "Header"]
+
+    it "ignores underline with spaces" $ do
+      testBadInput parseHeader "Header\n= = ="
+      `shouldBe`
+      "Not accepted"
 
 
 
@@ -414,4 +443,3 @@ spec = do
       testParser parseSymbol "\\*"
       `shouldBe`
       Text "*"
-

@@ -57,20 +57,33 @@ parseBlock = Prsc.try parseHeader
 
 
 
--- TODO: Handle Setext-style headers.
 parseHeader :: Parser Block
-parseHeader = do
-  Prsc.putState InHeader
-  level <- length <$> Prsc.many1 (Prsc.char '#')
-  Prsc.many1 Prsc.space
-  header <- Prsc.manyTill parseSpan (Prsc.try headerEnding)
-  return $ Header level header 
-  where 
-    headerEnding = do
-      Prsc.skipMany (Prsc.char ' ')
-      Prsc.skipMany (Prsc.char '#')
-      Prsc.skipMany (Prsc.char ' ')
-      Prsc.skipMany1 Prsc.endOfLine
+parseHeader = Prsc.try atxHeader <|> setextHeader
+  where
+    atxHeader :: Parser Block
+    atxHeader = do
+      Prsc.putState InHeader
+      level <- length <$> Prsc.many1 (Prsc.char '#')
+      Prsc.many1 Prsc.space
+      header <- Prsc.manyTill parseSpan (Prsc.try ending)
+      return $ Header level header 
+      where 
+        ending = do
+          Prsc.skipMany (Prsc.char ' ')
+          Prsc.skipMany (Prsc.char '#')
+          Prsc.skipMany (Prsc.char ' ')
+          Prsc.endOfLine
+
+    setextHeader :: Parser Block
+    setextHeader = do
+      Prsc.putState InHeader
+      header <- Prsc.many1 parseSpan
+      Prsc.endOfLine
+      c <- head <$> (Prsc.many1 (Prsc.char '=') <|> Prsc.many1 (Prsc.char '-'))
+      Prsc.endOfLine
+      case c of
+        '=' -> return $ Header 1 header
+        '-' -> return $ Header 2 header
 
 
 
