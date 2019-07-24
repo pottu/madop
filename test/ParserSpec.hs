@@ -193,6 +193,12 @@ spec = do
       `shouldBe`
       Paragraph [Text "Has", Space, Code "code over lines"]
 
+    it "handles backslashed escaped symbol" $ do
+      testParser parseParagraph "Use \\* to *emphasize*"
+      `shouldBe`
+      Paragraph [Text "Use", Space, Text "*", Space, Text "to", Space,
+                 Emph [Text "emphasize"]]
+
 
   describe "parseCodeBlock" $ do
     it "handles space-indented code block" $ do
@@ -398,4 +404,14 @@ spec = do
       `shouldBe`
       "Not accepted"
 
+  describe "parseSymbol" $ do
+    it "handles special character" $ do
+      testParser parseSymbol "*"
+      `shouldBe`
+      Text "*"
+
+    it "handles backslash escaped special character" $ do
+      testParser parseSymbol "\\*"
+      `shouldBe`
+      Text "*"
 

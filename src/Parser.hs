@@ -12,7 +12,7 @@ data ParserState = InParagraph
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
-mdSymbols = ['-', '*', '_', '[', ']', '(', ')', '#', '`', '!']
+mdSymbols = ['\\', '-', '*', '_', '[', ']', '(', ')', '#', '`', '!']
 
 -- https://www.w3schools.com/html/html_blocks.asp
 htmlBlocks = 
@@ -170,7 +170,11 @@ parseNl = do
 parseSymbol :: Parser Span
 parseSymbol = do
   c <- Prsc.oneOf mdSymbols
-  return $ Text [c]
+  if c == '\\'
+    then do
+      c <- Prsc.option '\\' (Prsc.oneOf mdSymbols)
+      return $ Text [c]
+    else return $ Text [c]
 
 
 
