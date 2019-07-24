@@ -1,7 +1,7 @@
 module ParserSpec (spec) where
 
 import Test.Hspec
-import Text.Parsec (runParser)
+import Text.Parsec (runParser, ParseError)
 
 import Types
 import Parser
@@ -13,6 +13,13 @@ testParser p s =
    in case parsed of
         Right doc -> doc
         Left e -> error ("Error when parsing \"" ++ s ++ "\"") 
+
+testBadInput :: Parser a -> String -> String 
+testBadInput p s = 
+  let parsed = runParser p InParagraph "" (s ++ "\n\n")
+   in case parsed of
+        Right _ -> error ("String \"" ++ s ++ "\" was accepted but shouldn't be.") 
+        Left e -> "Not accepted"
 
 
 
@@ -150,6 +157,7 @@ spec = do
       `shouldBe`
       Paragraph [Text "Has", Space, Emph [Text "emphasis", Space, Text "over", Space, Text "lines"]]
 
+    -- These types of tests should now be done with testBadInput instead.
     it "handles unclosed emphasis" $ do
       testParser parseParagraph "Fake *emphasis"
       `shouldBe`
@@ -206,6 +214,13 @@ spec = do
                 , "end"
                 ]
 
+    it "ignores 2-space indented block" $ do
+      testBadInput parseCodeBlock "  fun pseudocode:\n\
+                                  \    doSomething\n\
+                                  \  end"
+      `shouldBe`
+      "Not accepted"
+
   describe "parseHtmlBlock" $ do
     it "handles simple html block" $ do
       testParser parseHtmlBlock "<ol>\n  <li>Item</li>\n</ol>"
@@ -216,6 +231,16 @@ spec = do
       testParser parseHtmlBlock "<div><p>Some text</p></div>"
       `shouldBe`
       HtmlBlock "<div><p>Some text</p></div>"
+
+    it "ignores invalid tags" $ do
+      testBadInput parseHtmlBlock "<notag><p>Some text</p></notag>"
+      `shouldBe`
+      "Not accepted"
+
+    it "ignores mismatched tags" $ do
+      testBadInput parseHtmlBlock "<div><p>Some text</p></ul>"
+      `shouldBe`
+      "Not accepted"
 
 
 
@@ -288,6 +313,16 @@ spec = do
       `shouldBe`
       Emph [Text "Nest", Space, Emph [Text "test"]]
 
+    it "ignores unclosed emphasis" $ do
+      testBadInput parseEmph "*Open but never closed"
+      `shouldBe`
+      "Not accepted"
+
+    it "ignores mismatched symbols" $ do
+      testBadInput parseEmph "**Mismatch__"
+      `shouldBe`
+      "Not accepted"
+
 
 
   describe "parseStrong" $ do
@@ -316,6 +351,15 @@ spec = do
       `shouldBe`
       Strong [Emph [Text "emph"]]
 
+    it "ignores unclosed strong" $ do
+      testBadInput parseStrong "**Open but never closed"
+      `shouldBe`
+      "Not accepted"
+
+    it "ignores mismatched symbols" $ do
+      testBadInput parseStrong "**Mismatch__"
+      `shouldBe`
+      "Not accepted"
 
 
   describe "parseCode" $ do
@@ -344,5 +388,9 @@ spec = do
       `shouldBe`
       Code "`"
 
+    it "ignores unclosed code block" $ do
+      testBadInput parseEmph "`fun foo()"
+      `shouldBe`
+      "Not accepted"
 
 
