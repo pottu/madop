@@ -114,7 +114,8 @@ parseHorizontalRule = do
 -- Note: doesn't enforce blanklines around block
 parseHtmlBlock :: Parser Block
 parseHtmlBlock = do
-  tag <- parseTextBetween '<' '>' Prsc.letter
+  Prsc.char '<'
+  tag <- Prsc.many1 Prsc.letter
   if tag `notElem` htmlBlocks
     then Prsc.unexpected "Not a valid HTML-tag."     
     else do
@@ -122,7 +123,7 @@ parseHtmlBlock = do
       block <- Prsc.many $ Prsc.notFollowedBy (Prsc.string closing) *> Prsc.anyChar 
       Prsc.string closing 
       Prsc.many1 Prsc.endOfLine
-      return $ HtmlBlock $ "<" ++ tag ++ ">" ++ block ++ closing
+      return $ HtmlBlock $ "<" ++ tag ++ block ++ closing
       
 
   

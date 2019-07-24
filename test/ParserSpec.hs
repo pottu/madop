@@ -232,6 +232,11 @@ spec = do
       `shouldBe`
       HtmlBlock "<div><p>Some text</p></div>"
 
+    it "allows blocks to have attributes" $ do
+      testParser parseHtmlBlock "<div style='color:red'><p>Red text</p></div>"
+      `shouldBe`
+      HtmlBlock "<div style='color:red'><p>Red text</p></div>"
+
     it "ignores invalid tags" $ do
       testBadInput parseHtmlBlock "<notag><p>Some text</p></notag>"
       `shouldBe`
