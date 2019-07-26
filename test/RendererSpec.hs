@@ -77,6 +77,11 @@ spec = do
       `shouldBe`
       "<h4>Simple h4</h4>"
 
+    it "renders h6 if level > 6" $ do
+      renderBlock $ Header 8 [Text "Render", Space, Text "h6"]
+      `shouldBe`
+      "<h6>Render h6</h6>"
+
     it "renders simple paragraph" $ do
       renderBlock $ Paragraph [Text "Lorem", Space, Text "ipsum", Space, Text "dolor",
                               Space, Text "sit", Space, Text "amet."]

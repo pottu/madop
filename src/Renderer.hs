@@ -18,8 +18,8 @@ renderBlock :: Block -> String
 renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
 
 renderBlock (Header level spans) = 
-  -- FIXME: Ensure level <= 6!
-   "<h" ++ show level ++ ">" ++ renderSpans spans ++ "</h" ++ show level ++ ">"
+  let lvl = if level > 6 then 6 else level
+   in "<h" ++ show lvl ++ ">" ++ renderSpans spans ++ "</h" ++ show lvl ++ ">"
 
 renderBlock (CodeBlock lines) = 
   "<pre><code>" ++ renderLines lines ++ "</code></pre>"
