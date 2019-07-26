@@ -97,6 +97,16 @@ spec = do
       [Paragraph [Text "Some", Space, Text "text."], HtmlBlock "<ul><li>Item</li></ul>",
        Paragraph [Text "More", Space, Text "text."]]
 
+    it "handles blanklines at start of document" $ do
+      testParser parseDocument "\n\n   \n     \n \n\n \nSome text."
+      `shouldBe`
+      [Paragraph [Text "Some", Space, Text "text."]] 
+
+    it "handles arbitrary blanklines" $ do
+      testParser parseDocument "\n\nOne\n    \n \nTwo\n \nThree\n \n\n"
+      `shouldBe`
+      [Paragraph [Text "One"], Paragraph [Text "Two"], Paragraph [Text "Three"]]
+
 
 
   describe "parseHeader" $ do

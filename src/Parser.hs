@@ -31,26 +31,31 @@ htmlSpans =
 
 -- | Parse a string formatted with Markdown.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n\n")
+parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" s
              in either (error . show) id parsed
 
 
 
+blankline :: Parser Char
+blankline = Prsc.try $ (Prsc.skipMany (Prsc.char ' ')) *> Prsc.endOfLine
+
+blanklines :: Parser ()
+blanklines = Prsc.skipMany blankline
+
+
 parseDocument :: Parser Document
-parseDocument = Prsc.manyTill parseBlock (Prsc.try ending)
-  where
-    ending = do
-      Prsc.skipMany $ Prsc.oneOf " \n"
-      Prsc.eof
+parseDocument = blanklines *> Prsc.manyTill parseBlock Prsc.eof
 
 
 
 parseBlock :: Parser Block
-parseBlock = Prsc.try parseHeader
-         <|> Prsc.try parseCodeBlock
-         <|> Prsc.try parseHtmlBlock
-         <|> Prsc.try parseHorizontalRule
-         <|> parseParagraph
+parseBlock = Prsc.choice [
+             Prsc.try parseHeader
+           , Prsc.try parseCodeBlock
+           , Prsc.try parseHtmlBlock
+           , Prsc.try parseHorizontalRule
+           , parseParagraph
+           ] <* blanklines
 
 
 
@@ -68,8 +73,7 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
         ending = do
           Prsc.skipMany (Prsc.char ' ')
           Prsc.skipMany (Prsc.char '#')
-          Prsc.skipMany (Prsc.char ' ')
-          Prsc.many1 Prsc.endOfLine
+          blankline
 
     setextHeader :: Parser Block
     setextHeader = do
@@ -88,12 +92,8 @@ parseParagraph :: Parser Block
 parseParagraph = do
   Prsc.putState InParagraph 
   spans <- Prsc.many1 parseSpan
-  ending
+  blankline
   return $ Paragraph spans
-    where
-      ending = do
-        Prsc.endOfLine
-        Prsc.many $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
 
 
 
@@ -101,7 +101,7 @@ parseCodeBlock :: Parser Block
 parseCodeBlock = do
   Prsc.putState InCodeBlock
   content <- Prsc.many1 codeLine
-  Prsc.skipMany $ Prsc.try (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+  blankline
   return $ CodeBlock content
     where
       codeLine = (Prsc.count 4 (Prsc.char ' ') <|> Prsc.string "\t")
@@ -130,9 +130,9 @@ parseHtmlBlock = do
       let closing = "</" ++ tag ++ ">"
       block <- Prsc.many $ Prsc.notFollowedBy (Prsc.string closing) *> Prsc.anyChar 
       Prsc.string closing 
-      Prsc.many1 Prsc.endOfLine
+      blankline
       return $ HtmlBlock $ "<" ++ tag ++ block ++ closing
-      
+    
 
   
 
@@ -166,7 +166,7 @@ parseNl = do
   case state of
     InParagraph -> do
       Prsc.endOfLine
-      Prsc.notFollowedBy (Prsc.skipMany (Prsc.char ' ') *> Prsc.endOfLine)
+      Prsc.notFollowedBy blankline
       Prsc.notFollowedBy parseHeader
       Prsc.notFollowedBy parseHorizontalRule
       Prsc.notFollowedBy parseHtmlBlock
