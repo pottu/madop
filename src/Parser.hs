@@ -31,7 +31,7 @@ htmlSpans =
 
 -- | Parse a string formatted with Markdown.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" s
+parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n")
              in either (error . show) id parsed
 
 
