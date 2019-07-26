@@ -12,16 +12,19 @@ type Output = String -> IO ()
 
 data ExecMode = Default Input Output 
               | Help
+              | Version
 
-
+currVersion = "0.X"
 
 usageMsg = "A simple Markdown to HTML converter.\n\
            \Usage: madop [-o output_file] (--stdin | input_file)\n\
-           \       madop [-h|--help]\n\n\
+           \       madop [-h|-v]\n\n\
            \Options:\n\
-           \  -h | --help  Display this message\n\
-           \  -o <file>    Place the output into <file>\n\
-           \  --stdin      Get input from stdin instead of a file"
+           \  -v | --version    Print installed madop version\n\
+           \  -h | --help       Print this message\n\
+           \  -o | -- output <file>\n\
+           \                    Place the output into <file>\n\
+           \  --stdin           Get input from stdin instead of a file"
 
 
 
@@ -38,9 +41,12 @@ main = do
 
     execute Help = putStrLn usageMsg
 
+    execute Version = putStrLn $ "madop version " ++ currVersion
+
 
 parseArgs :: Parser ExecMode
 parseArgs =  Prsc.try help
+        <|> Prsc.try version
         <|> pDefault
         <|> return Help
 
@@ -75,4 +81,9 @@ help :: Parser ExecMode
 help = do
   Prsc.try (Prsc.string "-h") <|> Prsc.string "--help"
   return Help
+
+version :: Parser ExecMode
+version = do
+  Prsc.try (Prsc.string "-v") <|> Prsc.string "--version"
+  return Version
 
