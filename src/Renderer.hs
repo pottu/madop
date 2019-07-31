@@ -13,7 +13,9 @@ encode  c  = [c]
 
 
 renderHTML :: Document -> String
-renderHTML = concatMap ((++"\n\n") . renderBlock)
+renderHTML [] = ""
+renderHTML (x:[]) = renderBlock x ++ "\n"
+renderHTML (x:xs) = (renderBlock x ++ "\n\n") ++ renderHTML xs
 
 renderBlock :: Block -> String
 renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
