@@ -3,6 +3,7 @@ module Renderer where
 
 import Types
 import Data.Maybe
+import Data.List (intercalate)
 
 encode :: Char -> String
 encode '<' = "&lt;"
@@ -29,6 +30,9 @@ renderBlock (CodeBlock lines) =
       renderLines (l:ls) = concatMap encode l ++ "\n" ++ renderLines ls 
 
 renderBlock (HtmlBlock s) = s
+
+renderBlock (BlockQuote blocks) =
+  "<blockquote>\n" ++ renderHTML blocks ++ "</blockquote>"
 
 renderBlock HorizontalRule = "<hr />"
       

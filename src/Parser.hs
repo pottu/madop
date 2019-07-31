@@ -9,6 +9,7 @@ import Data.Maybe
 data ParserState = InParagraph 
                  | InHeader
                  | InCodeBlock
+                 | InBlockQuote
                  deriving (Eq, Show)
 type Parser = Prsc.Parsec String ParserState
 
@@ -52,6 +53,7 @@ parseBlock :: Parser Block
 parseBlock = Prsc.choice [
              Prsc.try parseHeader
            , Prsc.try parseCodeBlock
+           , Prsc.try parseBlockQuote
            , Prsc.try parseHtmlBlock
            , Prsc.try parseHorizontalRule
            , parseParagraph
@@ -134,7 +136,16 @@ parseHtmlBlock = do
       return $ HtmlBlock $ "<" ++ tag ++ block ++ closing
     
 
-  
+parseBlockQuote :: Parser Block  
+parseBlockQuote = do
+  let quoteStart = Prsc.try $ Prsc.string "> "
+  let quoteLine = (Prsc.many (Prsc.notFollowedBy Prsc.endOfLine *> Prsc.anyChar)) <> (Prsc.string "\n")
+  quote <- concat <$> (Prsc.many1 $ quoteStart *> quoteLine)
+  input <- Prsc.getInput
+  Prsc.setInput (quote ++ "\n")
+  blocks <- Prsc.manyTill parseBlock Prsc.eof
+  Prsc.setInput input
+  return $ BlockQuote blocks
 
 
 

@@ -14,6 +14,7 @@ data Block
     | Header Int [Span] 
     | CodeBlock [String]
     | HtmlBlock String
+    | BlockQuote [Block]
     | HorizontalRule
     deriving (Show, Eq)
 

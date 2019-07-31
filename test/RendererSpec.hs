@@ -115,4 +115,8 @@ spec = do
       `shouldBe`
       "<ol>\n  <li>item</li>\n</ol>"
 
+    it "renders block quote" $ do
+      renderBlock $ BlockQuote [Header 1 [Text "Header"], Paragraph [Text "One", SoftBreak, Text "Two"]]
+      `shouldBe`
+      "<blockquote>\n<h1>Header</h1>\n\n<p>One\nTwo</p>\n\n</blockquote>"
 

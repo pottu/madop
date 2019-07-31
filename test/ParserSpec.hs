@@ -12,7 +12,7 @@ testParser p s =
   let parsed = runParser p InParagraph "" (s ++ "\n\n")
    in case parsed of
         Right doc -> doc
-        Left e -> error ("Error when parsing \"" ++ s ++ "\"") 
+        Left e -> error $ show e--error ("Error when parsing \"" ++ s ++ "\"") 
 
 testBadInput :: Parser a -> String -> String 
 testBadInput p s = 
@@ -292,6 +292,32 @@ spec = do
       `shouldBe`
       "Not accepted"
 
+  
+  describe "parseBlockQuote" $ do
+    it "handles simple block quote with paragraph inside" $ do
+      testParser parseBlockQuote "> One\n> Two\n"
+      `shouldBe`
+      BlockQuote [Paragraph [Text "One", SoftBreak, Text "Two"]]
+
+    it "handles multiple blocks inside" $ do
+      testParser parseBlockQuote "> # Header\n> Paragraph\n> \n> ***"
+      `shouldBe`
+      BlockQuote [Header 1 [Text "Header"], Paragraph [Text "Paragraph"], HorizontalRule]
+
+    it "handles fake beginning at following line" $ do
+      testParser parseBlockQuote "> One\n>"
+      `shouldBe`
+      BlockQuote [Paragraph [Text "One"]]
+
+    it "handles nested blockquotes" $ do
+      testParser parseBlockQuote "> > One\n> > Two"
+      `shouldBe`
+      BlockQuote [BlockQuote [Paragraph [Text "One", SoftBreak, Text "Two"]]]
+
+    it "handles quoted code blocks" $ do
+      testParser parseBlockQuote ">     fun foo()\n>       doStuff()\n>     end"
+      `shouldBe`
+      BlockQuote [CodeBlock ["fun foo()", "  doStuff()", "end"]]
 
 
   describe "parseHorizontalRule" $ do
