@@ -4,3 +4,4 @@ madop.cabal
 *.swp
 *.swo
 tmp*
+tags
