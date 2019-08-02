@@ -227,15 +227,24 @@ parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
 
 -- TODO: Handle reference-style links.
 parseLink :: Parser Span 
-parseLink = do
-  text <- parseTextBetween '[' ']' parseChar
-  Prsc.char '('
-  href <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
-                    *> parseChar
-  Prsc.skipMany $ Prsc.char ' '
-  title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
-  Prsc.char ')'
-  return $ Link text href title
+parseLink = inlineLink <|> autoLink
+  where
+    inlineLink :: Parser Span
+    inlineLink = do
+      text <- parseTextBetween '[' ']' parseChar
+      Prsc.char '('
+      href <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
+                        *> parseChar
+      Prsc.skipMany $ Prsc.char ' '
+      title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
+      Prsc.char ')'
+      return $ Link text href title
+
+    -- FIXME: Doesn't encode emails
+    autoLink :: Parser Span
+    autoLink = do
+      link <- parseTextBetween '<' '>' parseChar
+      return $ Link link ("mailto:" ++ link) Nothing
 
 
 

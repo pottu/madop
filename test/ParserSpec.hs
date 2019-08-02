@@ -348,15 +348,26 @@ spec = do
 
 
   describe "parseLink" $ do
-    it "handles simple link" $ do
+    it "handles simple inline link" $ do
       testParser parseLink "[Simple link](www.com \"Has title\")"
       `shouldBe`
       Link "Simple link" "www.com" (Just "Has title")
 
-    it "handles a link without title" $ do
+    it "handles inline link without title" $ do
       testParser parseLink "[Untitled](www.com)"
       `shouldBe`
       Link "Untitled" "www.com" Nothing
+
+    it "handles automatic link (link)" $ do
+      testParser parseLink "<www.example.com>"
+      `shouldBe`
+      Link "www.example.com" "www.example.com" Nothing
+
+    -- Only valid without encoding of emails.
+    it "handles automatic link (email)" $ do
+      testParser parseLink "<example@mail.com>"
+      `shouldBe`
+      Link "example@mail.com" "mailto:example@mail.com" Nothing
 
 
   
