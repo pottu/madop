@@ -2,6 +2,7 @@ module ParserSpec (spec) where
 
 import Test.Hspec
 import Text.Parsec (runParser, ParseError)
+import qualified Data.Map.Strict as Map
 
 import Types
 import Parser
@@ -9,14 +10,14 @@ import Parser
 
 testParser :: Parser a -> String -> a 
 testParser p s = 
-  let parsed = runParser p InParagraph "" (s ++ "\n\n")
+  let parsed = runParser p (NotInParagraph, Map.empty) "" (s ++ "\n\n")
    in case parsed of
         Right doc -> doc
         Left e -> error $ show e--error ("Error when parsing \"" ++ s ++ "\"") 
 
 testBadInput :: Parser a -> String -> String 
 testBadInput p s = 
-  let parsed = runParser p InParagraph "" (s ++ "\n\n")
+  let parsed = runParser p (NotInParagraph, Map.empty) "" (s ++ "\n\n")
    in case parsed of
         Right _ -> error ("String \"" ++ s ++ "\" was accepted but shouldn't be.") 
         Left e -> "Not accepted"
@@ -106,6 +107,66 @@ spec = do
       testParser parseDocument "\n\nOne\n    \n \nTwo\n \nThree\n \n\n"
       `shouldBe`
       [Paragraph [Text "One"], Paragraph [Text "Two"], Paragraph [Text "Three"]]
+
+
+  -- FIXME: Isolate testing of reference-style links from parseDocument
+  -- TODO: Reference-style links need more thorough testing
+  describe "parseDocument (for reference links)" $ do
+    it "handles single ref-link" $ do
+      testParser parseDocument "[Example]: example.com \"Title\"\n\
+                               \[Link][Example]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" (Just "Title")]]
+
+    it "handles single ref-link without title" $ do
+      testParser parseDocument "[Example]: example.com\n\
+                               \[Link][Example]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" Nothing]]
+
+    it "handles title wrapped with '" $ do
+      testParser parseDocument "[Example]: example.com 'Title'\n\
+                               \[Link][Example]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" (Just "Title")]]
+
+    it "handles title wrapped with parenthesis" $ do
+      testParser parseDocument "[Example]: example.com (Title)\n\
+                               \[Link][Example]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" (Just "Title")]]
+
+    it "handles optional space between reference and text" $ do
+      testParser parseDocument "[Example]: example.com \"Title\"\n\
+                               \[Link] [Example]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" (Just "Title")]]
+
+    it "handles non-case sensitivity" $ do
+      testParser parseDocument "[Example]: example.com \"Title\"\n\
+                               \[Link] [example][Link] [EXAMPLE]"
+      `shouldBe`
+      [Paragraph [Link "Link" "example.com" (Just "Title")
+                 ,Link "Link" "example.com" (Just "Title")]
+      ]
+
+    it "handles implicit link reference" $ do
+      testParser parseDocument "[Example]: example.com \"Title\"\n\
+                               \[Example][]"
+      `shouldBe`
+      [Paragraph [Link "Example" "example.com" (Just "Title")]]
+
+    it "handles multiple varying ref-links" $ do
+      testParser parseDocument "[1]:  one.com   \"One\"\n\
+                               \[2]:  two.com   'Two'\n\
+                               \[3]: <three.com> (Three)\n\
+                               \[One][1][Two][2][Three][3]"
+      `shouldBe`
+      [Paragraph [ Link "One" "one.com" (Just "One")
+                 , Link "Two" "two.com" (Just "Two")
+                 , Link "Three" "three.com" (Just "Three")
+                 ]
+      ]
 
 
 

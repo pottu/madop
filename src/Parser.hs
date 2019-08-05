@@ -5,12 +5,17 @@ import Types
 import Control.Applicative ((<|>))
 import qualified Text.Parsec as Prsc
 import Data.Maybe
+import Data.Char (toLower)
+import qualified Data.Map.Strict as Map
 
-data ParserState = InParagraph 
-                 | InHeader
-                 | InCodeBlock
-                 | InBlockQuote
-                 deriving (Eq, Show)
+data Context = InParagraph 
+             | NotInParagraph
+             deriving (Eq, Show)
+
+type LinkDef = (String, Maybe String)
+
+type ParserState = (Context, Map.Map String LinkDef)
+
 type Parser = Prsc.Parsec String ParserState
 
 mdSymbols = ['\\', '-', '*', '_', '[', ']', '(', ')', '#', '`', '!']
@@ -30,9 +35,37 @@ htmlSpans =
 
 
 
+
+consumeRefDefs :: Parser String 
+consumeRefDefs = unlines <$> Prsc.manyTill (Prsc.try refDef <|> anyLine) Prsc.eof
+    where
+      anyLine :: Parser String
+      anyLine = Prsc.manyTill Prsc.anyChar Prsc.endOfLine
+
+      -- FIXME: Title allowed on new line
+      refDef :: Parser String
+      refDef = do
+        Prsc.count 3 (Prsc.optional $ Prsc.char ' ')
+        ref <- map toLower <$> parseTextBetween '[' ']' (Prsc.noneOf "\n")
+        Prsc.char ':'
+        Prsc.skipMany1 $ Prsc.char ' '
+        link <- parseTextBetween '<' '>' (Prsc.noneOf "\n")
+            <|> Prsc.many1 (Prsc.notFollowedBy Prsc.space *> Prsc.anyChar)
+        Prsc.skipMany $ Prsc.char ' '
+        title <- Prsc.optionMaybe $ parseTextBetween '"' '"'   (Prsc.noneOf "\n")
+                                <|> parseTextBetween '\'' '\'' (Prsc.noneOf "\n")
+                                <|> parseTextBetween '(' ')'   (Prsc.noneOf "\n")
+        blankline
+
+        (ctx, map) <- Prsc.getState
+        Prsc.putState (ctx, Map.insert ref (link, title) map)
+        return ""
+
+
+
 -- | Parse a string formatted with Markdown.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.runParser parseDocument InParagraph "" (s ++ "\n")
+parseMd s = let parsed = Prsc.runParser parseDocument (NotInParagraph, Map.empty) "" (s ++ "\n")
              in either (error . show) id parsed
 
 
@@ -45,7 +78,10 @@ blanklines = Prsc.skipMany blankline
 
 
 parseDocument :: Parser Document
-parseDocument = blanklines *> Prsc.manyTill parseBlock Prsc.eof
+parseDocument = do
+  input <- consumeRefDefs
+  Prsc.setInput input
+  blanklines *> Prsc.manyTill parseBlock Prsc.eof
 
 
 
@@ -60,13 +96,11 @@ parseBlock = Prsc.choice [
            ] <* blanklines
 
 
-
 parseHeader :: Parser Block
 parseHeader = Prsc.try atxHeader <|> setextHeader
   where
     atxHeader :: Parser Block
     atxHeader = do
-      Prsc.putState InHeader
       level <- length <$> Prsc.many1 (Prsc.char '#')
       Prsc.many1 Prsc.space
       header <- Prsc.manyTill parseSpan (Prsc.try ending)
@@ -79,7 +113,6 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
 
     setextHeader :: Parser Block
     setextHeader = do
-      Prsc.putState InHeader
       header <- Prsc.many1 parseSpan
       Prsc.endOfLine
       c <- head <$> (Prsc.many1 (Prsc.char '=') <|> Prsc.many1 (Prsc.char '-'))
@@ -92,16 +125,17 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
 
 parseParagraph :: Parser Block
 parseParagraph = do
-  Prsc.putState InParagraph 
+  map <- snd <$> Prsc.getState
+  Prsc.putState (InParagraph, map)
   spans <- Prsc.many1 parseSpan
   blankline
+  Prsc.putState (NotInParagraph, map)
   return $ Paragraph spans
 
 
 
 parseCodeBlock :: Parser Block
 parseCodeBlock = do
-  Prsc.putState InCodeBlock
   content <- Prsc.many1 codeLine
   blankline
   return $ CodeBlock content
@@ -173,7 +207,7 @@ parseLineBreak = do
 
 parseNl :: Parser Span
 parseNl = do
-  state <- Prsc.getState
+  state <- fst <$> Prsc.getState
   case state of
     InParagraph -> do
       Prsc.endOfLine
@@ -227,7 +261,7 @@ parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
 
 -- TODO: Handle reference-style links.
 parseLink :: Parser Span 
-parseLink = inlineLink <|> autoLink
+parseLink = Prsc.try inlineLink <|> autoLink <|> refLink
   where
     inlineLink :: Parser Span
     inlineLink = do
@@ -240,11 +274,25 @@ parseLink = inlineLink <|> autoLink
       Prsc.char ')'
       return $ Link text href title
 
+    -- FIXME: Email as separate span?
     -- FIXME: Doesn't encode emails
     autoLink :: Parser Span
     autoLink = do
       link <- parseTextBetween '<' '>' parseChar
       return $ Link link ("mailto:" ++ link) Nothing
+
+    refLink :: Parser Span
+    refLink = do
+      text <- parseTextBetween '[' ']' parseChar
+      Prsc.optional $ Prsc.char ' '
+      -- Reference is either implicit or explicit
+      ref <- Prsc.try (Prsc.string "[]" *> return (map toLower text))
+         <|> map toLower <$> parseTextBetween '[' ']' parseChar
+      refs <- snd <$> Prsc.getState
+      case Map.lookup ref refs of
+        Just (link, title) -> return $ Link text link title
+        Nothing -> Prsc.unexpected "Link reference not found."
+
 
 
 
