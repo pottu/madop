@@ -274,12 +274,23 @@ parseLink = Prsc.try inlineLink <|> autoLink <|> refLink
       Prsc.char ')'
       return $ Link text href title
 
-    -- FIXME: Email as separate span?
+    -- FIXME: This is wrong. Actually parse an email, otherwise
+    -- default to link.
     -- FIXME: Doesn't encode emails
     autoLink :: Parser Span
-    autoLink = do
-      link <- parseTextBetween '<' '>' parseChar
-      return $ Link link ("mailto:" ++ link) Nothing
+    autoLink = Prsc.try email <|> link
+        where
+          email :: Parser Span
+          email = do
+            Prsc.char '<'
+            Email <$> Prsc.many1 (Prsc.notFollowedBy (Prsc.char '@') *> parseChar)
+                   <> Prsc.string "@"
+                   <> Prsc.manyTill parseChar (Prsc.char '>')
+
+          link :: Parser Span
+          link = do
+            link <- parseTextBetween '<' '>' parseChar
+            return $ Link link link Nothing
 
     refLink :: Parser Span
     refLink = do
@@ -292,6 +303,8 @@ parseLink = Prsc.try inlineLink <|> autoLink <|> refLink
       case Map.lookup ref refs of
         Just (link, title) -> return $ Link text link title
         Nothing -> Prsc.unexpected "Link reference not found."
+
+
 
 
 

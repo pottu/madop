@@ -27,6 +27,7 @@ data Span
     | LineBreak
     | SoftBreak
     | Link { text :: String, href :: String, title :: Maybe String }
+    | Email String
     | Image { path :: String, alt :: String, title :: Maybe String }
     | Emph [Span]
     | Strong [Span]

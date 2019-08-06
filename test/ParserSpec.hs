@@ -428,7 +428,7 @@ spec = do
     it "handles automatic link (email)" $ do
       testParser parseLink "<example@mail.com>"
       `shouldBe`
-      Link "example@mail.com" "mailto:example@mail.com" Nothing
+      Email "example@mail.com" 
 
 
   

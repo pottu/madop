@@ -45,6 +45,7 @@ renderSpans :: [Span] -> String
 renderSpans = concatMap renderSpan
 
 renderSpan :: Span -> String
+-- map encode s?
 renderSpan (Text s) = s
 
 renderSpan (Space) = " "
@@ -54,6 +55,9 @@ renderSpan (Link text href (Just title)) =
 
 renderSpan (Link text href Nothing) =
   "<a href=\"" ++ href ++ "\">" ++ text ++ "</a>"
+
+renderSpan (Email mail) =
+  "<a href=\"mailto:" ++ mail ++ "\">" ++ mail ++ "</a>"
 
 renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
 

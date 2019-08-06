@@ -29,6 +29,11 @@ spec = do
       `shouldBe`
       "<a href=\"www.com\">A link</a>"
 
+    it "handles email" $ do
+      renderSpan $ Email "mail@example.com"
+      `shouldBe`
+      "<a href=\"mailto:mail@example.com\">mail@example.com</a>"
+
     it "handles image" $ do
       renderSpan $ Image "/foo/bar.jpg" "An image" (Just "Some title")
       `shouldBe`
