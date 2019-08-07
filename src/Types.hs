@@ -1,4 +1,4 @@
-module Types (Document, Block (..), Span (..)) where
+module Types (Document, Block (..), Inline (..)) where
 
 import Data.Maybe
 
@@ -10,8 +10,8 @@ type Document = [Block]
 -- for a markup language (such as HTML).
 -- TODO: Add more block elements as needed
 data Block 
-    = Paragraph [Span]
-    | Header Int [Span] 
+    = Paragraph [Inline]
+    | Header Int [Inline] 
     | CodeBlock [String]
     | HtmlBlock String
     | BlockQuote [Block]
@@ -21,7 +21,7 @@ data Block
 -- | Represents common inline elements 
 -- for a markup language (such as HTML).
 -- TODO: Add more span elements as needed
-data Span 
+data Inline
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?
     | LineBreak
@@ -29,8 +29,8 @@ data Span
     | Link { text :: String, href :: String, title :: Maybe String }
     | Email String
     | Image { path :: String, alt :: String, title :: Maybe String }
-    | Emph [Span]
-    | Strong [Span]
-    | Code String
+    | Emphasis [Inline]
+    | Strong [Inline]
+    | CodeSpan String
     deriving (Show, Eq)
 

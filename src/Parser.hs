@@ -27,11 +27,6 @@ htmlBlocks =
   "h4", "h5", "h6", "header", "hr", "li", "main", "nav", "noscript", "ol", "p",
   "pre", "section", "table", "tfoot", "ul", "video"]
 
-htmlSpans =
-  ["a", "abbr", "acronym", "b", "bdo", "big", "br", "button", "cite", "code",
-  "dfn", "em", "i", "img", "input", "kbd", "label", "map", "object", "output",
-  "q", "samp", "script", "select", "small", "span", "strong", "sub", "sup",
-  "textarea", "time", "tt", "var"]
 
 
 
@@ -46,15 +41,15 @@ consumeRefDefs = unlines <$> Prsc.manyTill (Prsc.try refDef <|> anyLine) Prsc.eo
       refDef :: Parser String
       refDef = do
         Prsc.count 3 (Prsc.optional $ Prsc.char ' ')
-        ref <- map toLower <$> parseTextBetween '[' ']' (Prsc.noneOf "\n")
+        ref <- map toLower <$> textBetween '[' ']' (Prsc.noneOf "\n")
         Prsc.char ':'
         Prsc.skipMany1 $ Prsc.char ' '
-        link <- parseTextBetween '<' '>' (Prsc.noneOf "\n")
+        link <- textBetween '<' '>' (Prsc.noneOf "\n")
             <|> Prsc.many1 (Prsc.notFollowedBy Prsc.space *> Prsc.anyChar)
         Prsc.skipMany $ Prsc.char ' '
-        title <- Prsc.optionMaybe $ parseTextBetween '"' '"'   (Prsc.noneOf "\n")
-                                <|> parseTextBetween '\'' '\'' (Prsc.noneOf "\n")
-                                <|> parseTextBetween '(' ')'   (Prsc.noneOf "\n")
+        title <- Prsc.optionMaybe $ textBetween '"' '"'   (Prsc.noneOf "\n")
+                                <|> textBetween '\'' '\'' (Prsc.noneOf "\n")
+                                <|> textBetween '(' ')'   (Prsc.noneOf "\n")
         blankline
 
         (ctx, map) <- Prsc.getState
@@ -65,7 +60,7 @@ consumeRefDefs = unlines <$> Prsc.manyTill (Prsc.try refDef <|> anyLine) Prsc.eo
 
 -- | Parse a string formatted with Markdown.
 parseMd :: String -> Document
-parseMd s = let parsed = Prsc.runParser parseDocument (NotInParagraph, Map.empty) "" (s ++ "\n")
+parseMd s = let parsed = Prsc.runParser document (NotInParagraph, Map.empty) "" (s ++ "\n")
              in either (error . show) id parsed
 
 
@@ -77,33 +72,33 @@ blanklines :: Parser ()
 blanklines = Prsc.skipMany blankline
 
 
-parseDocument :: Parser Document
-parseDocument = do
+document :: Parser Document
+document = do
   input <- consumeRefDefs
   Prsc.setInput input
-  blanklines *> Prsc.manyTill parseBlock Prsc.eof
+  blanklines *> Prsc.manyTill block Prsc.eof
 
 
 
-parseBlock :: Parser Block
-parseBlock = Prsc.choice [
-             Prsc.try parseHeader
-           , Prsc.try parseCodeBlock
-           , Prsc.try parseBlockQuote
-           , Prsc.try parseHtmlBlock
-           , Prsc.try parseHorizontalRule
-           , parseParagraph
+block :: Parser Block
+block = Prsc.choice [
+             Prsc.try header
+           , Prsc.try codeBlock
+           , Prsc.try blockQuote
+           , Prsc.try htmlBlock
+           , Prsc.try horizontalRule
+           , paragraph
            ] <* blanklines
 
 
-parseHeader :: Parser Block
-parseHeader = Prsc.try atxHeader <|> setextHeader
+header :: Parser Block
+header = Prsc.try atxHeader <|> setextHeader
   where
     atxHeader :: Parser Block
     atxHeader = do
       level <- length <$> Prsc.many1 (Prsc.char '#')
       Prsc.many1 Prsc.space
-      header <- Prsc.manyTill parseSpan (Prsc.try ending)
+      header <- Prsc.manyTill inline (Prsc.try ending)
       return $ Header level header 
       where 
         ending = do
@@ -113,7 +108,7 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
 
     setextHeader :: Parser Block
     setextHeader = do
-      header <- Prsc.many1 parseSpan
+      header <- Prsc.many1 inline
       Prsc.endOfLine
       c <- head <$> (Prsc.many1 (Prsc.char '=') <|> Prsc.many1 (Prsc.char '-'))
       Prsc.endOfLine
@@ -123,19 +118,19 @@ parseHeader = Prsc.try atxHeader <|> setextHeader
 
 
 
-parseParagraph :: Parser Block
-parseParagraph = do
+paragraph :: Parser Block
+paragraph = do
   map <- snd <$> Prsc.getState
   Prsc.putState (InParagraph, map)
-  spans <- Prsc.many1 parseSpan
+  inlines <- Prsc.many1 inline
   blankline
   Prsc.putState (NotInParagraph, map)
-  return $ Paragraph spans
+  return $ Paragraph inlines
 
 
 
-parseCodeBlock :: Parser Block
-parseCodeBlock = do
+codeBlock :: Parser Block
+codeBlock = do
   content <- Prsc.many1 codeLine
   blankline
   return $ CodeBlock content
@@ -145,8 +140,8 @@ parseCodeBlock = do
 
 
 
-parseHorizontalRule :: Parser Block
-parseHorizontalRule = do
+horizontalRule :: Parser Block
+horizontalRule = do
   Prsc.skipMany $ Prsc.char ' '
   opening <- Prsc.oneOf "*-_"
   Prsc.count 2 ((Prsc.skipMany (Prsc.char ' ')) *> Prsc.char opening)
@@ -156,8 +151,8 @@ parseHorizontalRule = do
 
 
 -- Note: doesn't enforce blanklines around block
-parseHtmlBlock :: Parser Block
-parseHtmlBlock = do
+htmlBlock :: Parser Block
+htmlBlock = do
   Prsc.char '<'
   tag <- Prsc.many1 Prsc.letter
   if tag `notElem` htmlBlocks
@@ -170,58 +165,58 @@ parseHtmlBlock = do
       return $ HtmlBlock $ "<" ++ tag ++ block ++ closing
     
 
-parseBlockQuote :: Parser Block  
-parseBlockQuote = do
+blockQuote :: Parser Block  
+blockQuote = do
   let quoteStart = Prsc.try $ Prsc.string "> "
   let quoteLine = (Prsc.many (Prsc.notFollowedBy Prsc.endOfLine *> Prsc.anyChar)) <> (Prsc.string "\n")
   quote <- concat <$> (Prsc.many1 $ quoteStart *> quoteLine)
   input <- Prsc.getInput
   Prsc.setInput (quote ++ "\n")
-  blocks <- Prsc.manyTill parseBlock Prsc.eof
+  blocks <- Prsc.manyTill block Prsc.eof
   Prsc.setInput input
   return $ BlockQuote blocks
 
 
 
-parseSpan :: Parser Span
-parseSpan = Prsc.try parseNl
-        <|> Prsc.try parseLineBreak
-        <|> Prsc.try parseSpace
-        <|> Prsc.try parseImage
-        <|> Prsc.try parseLink
-        <|> Prsc.try parseStrong
-        <|> Prsc.try parseEmph
-        <|> Prsc.try parseCode
-        <|> parseText
-        <|> parseSymbol
+inline :: Parser Inline
+inline = Prsc.try newline
+        <|> Prsc.try lineBreak
+        <|> Prsc.try space
+        <|> Prsc.try image
+        <|> Prsc.try link
+        <|> Prsc.try strong
+        <|> Prsc.try emphasis
+        <|> Prsc.try codeSpan
+        <|> plaintext
+        <|> symbol
 
 
 
-parseLineBreak :: Parser Span
-parseLineBreak = do
+lineBreak :: Parser Inline
+lineBreak = do
   Prsc.count 2 $ Prsc.char ' '
   Prsc.endOfLine
   return LineBreak
 
 
 
-parseNl :: Parser Span
-parseNl = do
+newline :: Parser Inline
+newline = do
   state <- fst <$> Prsc.getState
   case state of
     InParagraph -> do
       Prsc.endOfLine
       Prsc.notFollowedBy blankline
-      Prsc.notFollowedBy parseHeader
-      Prsc.notFollowedBy parseHorizontalRule
-      Prsc.notFollowedBy parseHtmlBlock
+      Prsc.notFollowedBy header
+      Prsc.notFollowedBy horizontalRule
+      Prsc.notFollowedBy htmlBlock
       return SoftBreak 
     _ -> Prsc.unexpected "Rule only applies in paragraph"
 
 
 
-parseSymbol :: Parser Span
-parseSymbol = do
+symbol :: Parser Inline
+symbol = do
   c <- Prsc.oneOf mdSymbols
   if c == '\\'
     then do
@@ -231,22 +226,22 @@ parseSymbol = do
 
 
 
-parseText :: Parser Span
-parseText = do
+plaintext :: Parser Inline
+plaintext = do
   text <- Prsc.many1 $ Prsc.noneOf (' ':'\n':mdSymbols)
   return $ Text text
 
 
 
-parseSpace :: Parser Span
-parseSpace = do
+space :: Parser Inline
+space = do
   Prsc.char ' '
   return Space
 
 
 
-parseTextBetween :: Char -> Char -> Parser a -> Parser [a]
-parseTextBetween open close p = do
+textBetween :: Char -> Char -> Parser a -> Parser [a]
+textBetween open close p = do
   Prsc.char open
   content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char close) *> p
   Prsc.char close
@@ -254,51 +249,51 @@ parseTextBetween open close p = do
 
 
 
-parseChar :: Parser Char 
-parseChar = Prsc.noneOf "\n" <|> parseNl *> return ' '
+charInBlock :: Parser Char 
+charInBlock = Prsc.noneOf "\n" <|> newline *> return ' '
 
 
 
 -- TODO: Handle reference-style links.
-parseLink :: Parser Span 
-parseLink = Prsc.try inlineLink <|> autoLink <|> refLink
+link :: Parser Inline 
+link = Prsc.try inlineLink <|> autoLink <|> refLink
   where
-    inlineLink :: Parser Span
+    inlineLink :: Parser Inline
     inlineLink = do
-      text <- parseTextBetween '[' ']' parseChar
+      text <- textBetween '[' ']' charInBlock
       Prsc.char '('
       href <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
-                        *> parseChar
+                        *> charInBlock
       Prsc.skipMany $ Prsc.char ' '
-      title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
+      title <- Prsc.optionMaybe $ textBetween '"' '"' charInBlock
       Prsc.char ')'
       return $ Link text href title
 
     -- FIXME: This is wrong. Actually parse an email, otherwise
     -- default to link.
     -- FIXME: Doesn't encode emails
-    autoLink :: Parser Span
+    autoLink :: Parser Inline
     autoLink = Prsc.try email <|> link
         where
-          email :: Parser Span
+          email :: Parser Inline
           email = do
             Prsc.char '<'
-            Email <$> Prsc.many1 (Prsc.notFollowedBy (Prsc.char '@') *> parseChar)
+            Email <$> Prsc.many1 (Prsc.notFollowedBy (Prsc.char '@') *> charInBlock)
                    <> Prsc.string "@"
-                   <> Prsc.manyTill parseChar (Prsc.char '>')
+                   <> Prsc.manyTill charInBlock (Prsc.char '>')
 
-          link :: Parser Span
+          link :: Parser Inline
           link = do
-            link <- parseTextBetween '<' '>' parseChar
+            link <- textBetween '<' '>' charInBlock
             return $ Link link link Nothing
 
-    refLink :: Parser Span
+    refLink :: Parser Inline
     refLink = do
-      text <- parseTextBetween '[' ']' parseChar
+      text <- textBetween '[' ']' charInBlock
       Prsc.optional $ Prsc.char ' '
       -- Reference is either implicit or explicit
       ref <- Prsc.try (Prsc.string "[]" *> return (map toLower text))
-         <|> map toLower <$> parseTextBetween '[' ']' parseChar
+         <|> map toLower <$> textBetween '[' ']' charInBlock
       refs <- snd <$> Prsc.getState
       case Map.lookup ref refs of
         Just (link, title) -> return $ Link text link title
@@ -311,45 +306,45 @@ parseLink = Prsc.try inlineLink <|> autoLink <|> refLink
 
 -- Shares almost all code with parseLink
 -- TODO: Handle reference-style images.
-parseImage :: Parser Span
-parseImage = do
+image :: Parser Inline
+image = do
   Prsc.char '!'
-  alt <- parseTextBetween '[' ']' parseChar
+  alt <- textBetween '[' ']' charInBlock
   Prsc.char '('
   path <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
-                    *> parseChar
+                    *> charInBlock
   Prsc.skipMany $ Prsc.char ' '
-  title <- Prsc.optionMaybe $ parseTextBetween '"' '"' parseChar
+  title <- Prsc.optionMaybe $ textBetween '"' '"' charInBlock
   Prsc.char ')'
   return $ Image path alt title
   
   
 
 -- FIXME: Spec has rules on spaces around opening/closing signs
-parseEmph :: Parser Span
-parseEmph = do
+emphasis :: Parser Inline
+emphasis = do
   opening <- Prsc.char '*' <|> Prsc.char '_'
-  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char opening) *> parseSpan
+  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char opening) *> inline
   Prsc.char opening
-  return $ Emph content
+  return $ Emphasis content
 
 
 
-parseStrong :: Parser Span
-parseStrong = do
+strong :: Parser Inline
+strong = do
   opening <- Prsc.string "**" <|> Prsc.string "__"
-  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.string opening) *> parseSpan
+  content <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.string opening) *> inline
   Prsc.string opening
   return $ Strong content
 
 
 
-parseCode :: Parser Span
-parseCode = do
+codeSpan :: Parser Inline
+codeSpan = do
   opening <- Prsc.many1 (Prsc.char '`') <* Prsc.optional (Prsc.char ' ')
   let closing = (Prsc.optional (Prsc.char ' ')) *> Prsc.string opening
-  content <- Prsc.many1 $ Prsc.notFollowedBy closing *> parseChar
+  content <- Prsc.many1 $ Prsc.notFollowedBy closing *> charInBlock
   closing
-  return $ Code content
+  return $ CodeSpan content
 
     

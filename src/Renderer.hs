@@ -18,11 +18,11 @@ renderHTML (x:[]) = renderBlock x ++ "\n"
 renderHTML (x:xs) = (renderBlock x ++ "\n\n") ++ renderHTML xs
 
 renderBlock :: Block -> String
-renderBlock (Paragraph content) = "<p>" ++ renderSpans content ++ "</p>"
+renderBlock (Paragraph content) = "<p>" ++ renderInlines content ++ "</p>"
 
-renderBlock (Header level spans) = 
+renderBlock (Header level inlines) = 
   let lvl = if level > 6 then 6 else level
-   in "<h" ++ show lvl ++ ">" ++ renderSpans spans ++ "</h" ++ show lvl ++ ">"
+   in "<h" ++ show lvl ++ ">" ++ renderInlines inlines ++ "</h" ++ show lvl ++ ">"
 
 renderBlock (CodeBlock lines) = 
   "<pre><code>" ++ renderLines lines ++ "</code></pre>"
@@ -41,37 +41,37 @@ renderBlock HorizontalRule = "<hr />"
 
 
 
-renderSpans :: [Span] -> String
-renderSpans = concatMap renderSpan
+renderInlines :: [Inline] -> String
+renderInlines = concatMap renderInline
 
-renderSpan :: Span -> String
+renderInline :: Inline -> String
 -- map encode s?
-renderSpan (Text s) = s
+renderInline (Text s) = s
 
-renderSpan (Space) = " "
+renderInline (Space) = " "
 
-renderSpan (Link text href (Just title)) =
+renderInline (Link text href (Just title)) =
   "<a href=\"" ++ href ++ "\" title=\"" ++ title ++ "\">" ++ text ++ "</a>"
 
-renderSpan (Link text href Nothing) =
+renderInline (Link text href Nothing) =
   "<a href=\"" ++ href ++ "\">" ++ text ++ "</a>"
 
-renderSpan (Email mail) =
+renderInline (Email mail) =
   "<a href=\"mailto:" ++ mail ++ "\">" ++ mail ++ "</a>"
 
-renderSpan (Emph content) = "<em>" ++ renderSpans content ++ "</em>"
+renderInline (Emphasis content) = "<em>" ++ renderInlines content ++ "</em>"
 
-renderSpan (Strong content) = "<strong>" ++ renderSpans content ++ "</strong>"
+renderInline (Strong content) = "<strong>" ++ renderInlines content ++ "</strong>"
 
-renderSpan LineBreak = "<br />"
+renderInline LineBreak = "<br />"
 
-renderSpan SoftBreak = "\n"
+renderInline SoftBreak = "\n"
 
-renderSpan (Code content) = "<code>" ++ concatMap encode content ++ "</code>"
+renderInline (CodeSpan code) = "<code>" ++ concatMap encode code ++ "</code>"
 
-renderSpan (Image path alt Nothing) = 
+renderInline (Image path alt Nothing) = 
   "<img src=\"" ++ path ++ "\" alt=\"" ++ alt ++ "\" />" 
-renderSpan (Image path alt (Just title)) =
+renderInline (Image path alt (Just title)) =
   "<img src=\"" ++ path ++ "\" alt=\"" ++ alt ++ "\" title=\"" ++ title ++ "\" />" 
 
 

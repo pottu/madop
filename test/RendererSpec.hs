@@ -9,63 +9,63 @@ import Renderer
 
 spec :: Spec
 spec = do
-  describe "renderSpan" $ do
+  describe "renderInline" $ do
     it "handles text" $ do
-      renderSpan $ Text "Simple text"
+      renderInline $ Text "Simple text"
       `shouldBe`
       "Simple text"
 
     it "handles space" $ do
-      renderSpan Space
+      renderInline Space
       `shouldBe`
       " "
     it "handles link" $ do
-      renderSpan $ Link "A link" "www.com" (Just "Some title")
+      renderInline $ Link "A link" "www.com" (Just "Some title")
       `shouldBe`
       "<a href=\"www.com\" title=\"Some title\">A link</a>"
 
     it "handles link without title" $ do
-      renderSpan $ Link "A link" "www.com" Nothing
+      renderInline $ Link "A link" "www.com" Nothing
       `shouldBe`
       "<a href=\"www.com\">A link</a>"
 
     it "handles email" $ do
-      renderSpan $ Email "mail@example.com"
+      renderInline $ Email "mail@example.com"
       `shouldBe`
       "<a href=\"mailto:mail@example.com\">mail@example.com</a>"
 
     it "handles image" $ do
-      renderSpan $ Image "/foo/bar.jpg" "An image" (Just "Some title")
+      renderInline $ Image "/foo/bar.jpg" "An image" (Just "Some title")
       `shouldBe`
       "<img src=\"/foo/bar.jpg\" alt=\"An image\" title=\"Some title\" />"
 
     it "handles image without title" $ do
-      renderSpan $ Image "www.com/foo.jpg" "An image" Nothing
+      renderInline $ Image "www.com/foo.jpg" "An image" Nothing
       `shouldBe`
       "<img src=\"www.com/foo.jpg\" alt=\"An image\" />"
 
     it "handles emphasized text" $ do
-      renderSpan $ Emph [Text "Emphasized", Space, Text "text"]
+      renderInline $ Emphasis [Text "Emphasized", Space, Text "text"]
       `shouldBe`
       "<em>Emphasized text</em>"
 
     it "handles strong text" $ do
-      renderSpan $ Strong [Text "Strong", Space, Text "text"]
+      renderInline $ Strong [Text "Strong", Space, Text "text"]
       `shouldBe`
       "<strong>Strong text</strong>"
 
     it "handles code span" $ do
-      renderSpan $ Code "for x in y do z"
+      renderInline $ CodeSpan "for x in y do z"
       `shouldBe`
       "<code>for x in y do z</code>"
 
     it "handles code span with encoded chars" $ do
-      renderSpan $ Code "<div>&copy Foo Inc.</div>"
+      renderInline $ CodeSpan "<div>&copy Foo Inc.</div>"
       `shouldBe`
       "<code>&lt;div&gt;&amp;copy Foo Inc.&lt;/div&gt;</code>"
 
     it "renders soft break" $ do
-      renderSpan SoftBreak 
+      renderInline SoftBreak 
       `shouldBe`
       "\n"
 
