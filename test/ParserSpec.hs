@@ -168,6 +168,12 @@ spec = do
                  ]
       ]
 
+    it "handles single ref-image" $ do
+      testParser document "[Example]: img/example.png \"Title\"\n\
+                          \![My image][Example]"
+      `shouldBe`
+      [Paragraph [Image "img/example.png" "My image" (Just "Title")]]
+
 
 
   describe "header" $ do

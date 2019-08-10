@@ -8,7 +8,6 @@ type Document = [Block]
 
 -- | Represents common block elements 
 -- for a markup language (such as HTML).
--- TODO: Add more block elements as needed
 data Block 
     = Paragraph [Inline]
     | Header Int [Inline] 
@@ -20,7 +19,6 @@ data Block
 
 -- | Represents common inline elements 
 -- for a markup language (such as HTML).
--- TODO: Add more span elements as needed
 data Inline
     = Text String 
     | Space -- Perhaps it'd be a good idea to count amount of spaces?

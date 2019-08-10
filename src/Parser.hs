@@ -106,6 +106,8 @@ header = Prsc.try atxHeader <|> setextHeader
           Prsc.skipMany (Prsc.char '#')
           blankline
 
+    -- Checking if the tailing required symbols are present before
+    -- parsing inline could probably increase performance.
     setextHeader :: Parser Block
     setextHeader = do
       header <- Prsc.many1 inline
@@ -210,6 +212,7 @@ newline = do
       Prsc.notFollowedBy header
       Prsc.notFollowedBy horizontalRule
       Prsc.notFollowedBy htmlBlock
+      Prsc.notFollowedBy blockQuote
       return SoftBreak 
     _ -> Prsc.unexpected "Rule only applies in paragraph"
 
@@ -305,18 +308,35 @@ link = Prsc.try inlineLink <|> autoLink <|> refLink
 
 
 -- Shares almost all code with parseLink
--- TODO: Handle reference-style images.
+-- Since inline & ref imgs have the same prefix
+-- this could probably be parsed just once.
 image :: Parser Inline
-image = do
-  Prsc.char '!'
-  alt <- textBetween '[' ']' charInBlock
-  Prsc.char '('
-  path <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
-                    *> charInBlock
-  Prsc.skipMany $ Prsc.char ' '
-  title <- Prsc.optionMaybe $ textBetween '"' '"' charInBlock
-  Prsc.char ')'
-  return $ Image path alt title
+image = Prsc.try inlineImage <|> refImage
+  where 
+    inlineImage :: Parser Inline
+    inlineImage = do
+      Prsc.char '!'
+      alt <- textBetween '[' ']' charInBlock
+      Prsc.char '('
+      path <- Prsc.many1 $ Prsc.notFollowedBy (Prsc.char ')' <|> Prsc.char ' ')
+                        *> charInBlock
+      Prsc.skipMany $ Prsc.char ' '
+      title <- Prsc.optionMaybe $ textBetween '"' '"' charInBlock
+      Prsc.char ')'
+      return $ Image path alt title
+
+    refImage :: Parser Inline
+    refImage = do
+      Prsc.char '!'
+      alt <- textBetween '[' ']' charInBlock
+      Prsc.optional $ Prsc.char ' '
+      -- Reference is either implicit or explicit
+      ref <- Prsc.try (Prsc.string "[]" *> return (map toLower alt))
+         <|> map toLower <$> textBetween '[' ']' charInBlock
+      refs <- snd <$> Prsc.getState
+      case Map.lookup ref refs of
+        Just (path, title) -> return $ Image path alt title
+        Nothing -> Prsc.unexpected "Image reference not found."
   
   
 
