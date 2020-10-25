@@ -1,5 +1,5 @@
 # madop
-A(nother) Markdown parser implemented in Haskell.
+A(nother) Markdown parser implemented in Haskell, done as a course project.
 
 ### Build instructions
 The program is easiest built using [Stack](https://www.haskellstack.org/).
